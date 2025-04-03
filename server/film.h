@@ -9,11 +9,22 @@
 #include <sys/socket.h>
 
 #define BUFFER_SIZE 1024
+#define MAX_FILMS 10
 
-// Funzione per gestire le richieste di visualizzazione catalogo
+// Struttura per rappresentare i dati di un film
+typedef struct {
+    char titolo[256];
+    char genere[101];
+    int copie_disponibili;
+} Film;
+
+// Funzione per gestire le richieste di catalogo film
 void handle_catalogo_request(int client_socket, PGconn *conn);
 
-// Funzione per inviare film al cliente
-int recupera_film(PGconn *conn, int client_socket);
+// Funzione per ottenere i film dal database
+int get_films(PGconn *conn, Film *films, int max_films);
+
+// Funzione per formattare i dati dei film per l'invio al client
+void format_films_data(Film *films, int num_films, char *output, size_t output_size);
 
 #endif

@@ -1,23 +1,44 @@
 #include "film.h"
 
+// Funzione per gestire le richieste di catalogo film
 void handle_catalogo_request(int client_socket, PGconn *conn) {
+    Film films[MAX_FILMS];
+    char response[BUFFER_SIZE * 10] = {0};
+    int num_films;
     
-    printf("Tentativo di recupero catalogo film\n");
+    printf("Richiesta di catalogo film ricevuta\n");
     
-    // Recupera film dal database
-    if (recupera_film(conn, client_socket)) {
-        printf("Film recuperati e inviati al client\n");
-    } else {
+    // Ottieni i film dal database
+    num_films = get_films(conn, films, MAX_FILMS);
+    
+    if (num_films <= 0) {
+        // Nessun film trovato o errore di database
         send(client_socket, "FILM_FAIL", 9, 0);
-        printf("Film non recuperati\n");
+        printf("Errore nel recupero dei film dal database\n");
+        return;
     }
+    
+    // Formatta i dati dei film per l'invio al client
+    format_films_data(films, num_films, response, sizeof(response));
+    
+    // Invia i dati al client
+    send(client_socket, response, strlen(response), 0);
+    printf("Inviati dati di %d film al client\n", num_films);
 }
 
-int recupera_film(PGconn *conn, int client_socket) {
+// Funzione per ottenere i film dal database
+int get_films(PGconn *conn, Film *films, int max_films) {
     char query[BUFFER_SIZE];
-    snprintf(query, BUFFER_SIZE, "SELECT titolo, genere, copie_disponibili FROM film");
+    PGresult *result;
+    int num_films = 0;
     
-    PGresult *result = PQexec(conn, query);
+    // Crea la query per ottenere i film
+    snprintf(query, BUFFER_SIZE, 
+             "SELECT titolo, genere, copie_disponibili FROM film ORDER BY titolo LIMIT %d", 
+             max_films);
+    
+    // Esegui la query
+    result = PQexec(conn, query);
     
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         fprintf(stderr, "Query fallita: %s\n", PQerrorMessage(conn));
@@ -25,53 +46,55 @@ int recupera_film(PGconn *conn, int client_socket) {
         return 0;
     }
     
-    // Verifica se è stato trovato un record
-    int nrows = PQntuples(result);
-    if (nrows == 0) {
-        return 0;
+    // Ottieni il numero di film recuperati
+    num_films = PQntuples(result);
+    
+    // Riempi l'array di film
+    for (int i = 0; i < num_films; i++) {
+        strncpy(films[i].titolo, PQgetvalue(result, i, 0), sizeof(films[i].titolo) - 1);
+        films[i].titolo[sizeof(films[i].titolo) - 1] = '\0';
+        
+        strncpy(films[i].genere, PQgetvalue(result, i, 1), sizeof(films[i].genere) - 1);
+        films[i].genere[sizeof(films[i].genere) - 1] = '\0';
+        
+        films[i].copie_disponibili = atoi(PQgetvalue(result, i, 2));
     }
-
-    // Ottieni il numero di colonne
-    int ncols = PQnfields(result);
-    
-    // Prepara un buffer per contenere tutti i dati da inviare
-    char response[BUFFER_SIZE * 10] = ""; // Buffer più grande per contenere più film
-    char temp[BUFFER_SIZE] = "";
-    
-    // Aggiungi il numero di film al messaggio
-    sprintf(temp, "%d\n", nrows);
-    strcat(response, temp);
-    
-    // Per ogni riga (film)
-    for (int i = 0; i < nrows; i++) {
-        // Per ogni colonna
-        for (int j = 0; j < ncols; j++) {
-            // Ottieni il nome della colonna
-            const char* colName = PQfname(result, j);
-            // Ottieni il valore
-            const char* value = PQgetvalue(result, i, j);
-            
-            // Aggiungi al buffer temporaneo
-            sprintf(temp, "%s: %s\n", colName, value);
-            
-            // Controlla se c'è spazio nel buffer di risposta
-            if (strlen(response) + strlen(temp) < sizeof(response) - 1) {
-                strcat(response, temp);
-            } else {
-                fprintf(stderr, "Buffer di risposta pieno. Troncamento dei dati.\n");
-                break;
-            }
-        }
-        // Aggiungi un separatore tra i film
-        if (i < nrows - 1) {
-            strcat(response, "---\n");
-        }
-    }
-
-    // Invia i dati al client
-    send(client_socket, response, strlen(response), 0);
     
     PQclear(result);
+    return num_films;
+}
+
+// Funzione per formattare i dati dei film per l'invio al client
+void format_films_data(Film *films, int num_films, char *output, size_t output_size) {
+    char *ptr = output;
+    size_t remaining = output_size;
+    int chars_written;
     
-    return 1; // Successo
+    // Scrivi il numero di film
+    chars_written = snprintf(ptr, remaining, "%d\n", num_films);
+    ptr += chars_written;
+    remaining -= chars_written;
+    
+    // Scrivi i dati di ogni film
+    for (int i = 0; i < num_films; i++) {
+        // Titolo
+        chars_written = snprintf(ptr, remaining, "titolo: %s\n", films[i].titolo);
+        ptr += chars_written;
+        remaining -= chars_written;
+        
+        // Genere
+        chars_written = snprintf(ptr, remaining, "genere: %s\n", films[i].genere);
+        ptr += chars_written;
+        remaining -= chars_written;
+        
+        // Copie disponibili
+        chars_written = snprintf(ptr, remaining, "copie_disponibili: %d\n", films[i].copie_disponibili);
+        ptr += chars_written;
+        remaining -= chars_written;
+        
+        // Separatore tra film
+        chars_written = snprintf(ptr, remaining, "---\n");
+        ptr += chars_written;
+        remaining -= chars_written;
+    }
 }

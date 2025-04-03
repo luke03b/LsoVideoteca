@@ -291,19 +291,23 @@ void display_films(const char *film_data) {
         printf("Trovati %d film:\n\n", film_count);
     }
     
+    // Intestazione della tabella
+    printf("+---------------------------+------------------+-------------------+\n");
+    printf("| %-25s | %-16s | %-17s |\n", "TITOLO", "GENERE", "COPIE DISPONIBILI");
+    printf("+---------------------------+------------------+-------------------+\n");
+    
     char titolo[100] = "";
     char copie_disponibili[10] = "";
     char genere[50] = "";
-    int film_index = 0;
     
     while ((token = strtok_r(rest, "\n", &rest)) != NULL) {
         if (strcmp(token, "---") == 0) {
-            // Stampa il film corrente
+            // Stampa il film corrente in formato tabella
             if (titolo[0] != '\0') {
-                printf("Film #%d\n", ++film_index);
-                printf("\tTitolo: %s\n", titolo);
-                printf("\tGenere: %s\n", genere);
-                printf("\tCopie Disponibili: %s\n\n", copie_disponibili);
+                printf("| %-25s | %-16s | %-17s |\n", 
+                       titolo, 
+                       genere, 
+                       copie_disponibili);
                 
                 // Resetta i campi per il prossimo film
                 titolo[0] = '\0';
@@ -335,11 +339,14 @@ void display_films(const char *film_data) {
     
     // Stampa l'ultimo film se c'è
     if (titolo[0] != '\0') {
-        printf("Film #%d\n", ++film_index);
-        printf("\tTitolo: %s\n", titolo);
-        printf("\tGenere: %s\n", genere);
-        printf("\tCopie Disponibili: %s\n", copie_disponibili);
+        printf("| %-21s | %-16s | %-17s |\n", 
+               titolo, 
+               genere, 
+               copie_disponibili);
     }
+    
+    // Chiudi la tabella
+    printf("+---------------------------+------------------+-------------------+\n");
     
     free(data);
 }
