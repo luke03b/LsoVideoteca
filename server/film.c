@@ -36,7 +36,7 @@ void handle_search_request(int client_socket, PGconn *conn, char *search_params)
     char *search_type_str = strtok(search_params, ":");
     char *search_query = strtok(NULL, ":");
     
-    if (search_type_str == NULL || search_query == NULL) {
+    if (search_type_str == NULL || (atoi(search_type_str) != 3 && search_query == NULL)) {
         send(client_socket, "SEARCH_FAIL", 11, 0);
         printf("Parametri di ricerca non validi\n");
         return;
@@ -71,7 +71,7 @@ int get_films(PGconn *conn, Film *films, int max_films) {
     
     // Crea la query per ottenere i film
     snprintf(query, BUFFER_SIZE, 
-             "SELECT id, titolo, genere, copie_disponibili FROM film ORDER BY titolo LIMIT %d", 
+             "SELECT id, titolo, genere, copie_disponibili FROM film ORDER BY id LIMIT %d", 
              max_films);
     
     // Esegui la query
@@ -118,7 +118,7 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
             snprintf(sql_query, BUFFER_SIZE, 
                     "SELECT id, titolo, genere, copie_disponibili FROM film "
                     "WHERE LOWER(titolo) LIKE LOWER('%%%s%%') "
-                    "ORDER BY titolo LIMIT %d", 
+                    "ORDER BY id LIMIT %d", 
                     query, max_films);
             break;
             
@@ -127,7 +127,7 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
             snprintf(sql_query, BUFFER_SIZE, 
                     "SELECT id, titolo, genere, copie_disponibili FROM film "
                     "WHERE LOWER(genere) LIKE LOWER('%%%s%%') "
-                    "ORDER BY titolo LIMIT %d", 
+                    "ORDER BY id LIMIT %d", 
                     query, max_films);
             break;
             

@@ -82,8 +82,13 @@ int main() {
         printf("2. Registrazione\n");
         printf("3. Esci\n");
         printf("Scelta: ");
-        scanf("%d", &choice);
-        getchar(); // Consuma il carattere newline
+        if (scanf("%d", &choice) != 1) {
+            // Input non valido (non è un numero)
+            while (getchar() != '\n'); // Pulisci il buffer di input
+            choice = 0; // Imposta una scelta non valida per entrare nel default
+        } else {
+            getchar(); // Consuma il carattere newline solo se l'input era valido
+        }
         
         switch (choice) {
             case 1:
@@ -98,6 +103,9 @@ int main() {
                 return 0;
             default:
                 printf("Scelta non valida. Riprova.\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
+                clear_screen();
         }
     }
     
@@ -215,8 +223,13 @@ void show_main_menu(int sock, char *username) {
         printf("3. Mostra notifiche\n");
         printf("4. Logout\n");
         printf("Scelta: ");
-        scanf("%d", &choice);
-        getchar(); // Consuma il carattere newline
+        if (scanf("%d", &choice) != 1) {
+            // Input non valido (non è un numero)
+            while (getchar() != '\n'); // Pulisci il buffer di input
+            choice = 0; // Imposta una scelta non valida per entrare nel default
+        } else {
+            getchar(); // Consuma il carattere newline solo se l'input era valido
+        }
         
         switch (choice) {
             case 1:
@@ -275,9 +288,6 @@ void view_catalogo(int sock) {
     } else {
         display_films(buffer);
     }
-    
-    printf("\nPremi invio per tornare al menu principale...");
-    getchar(); // Attende che l'utente prema invio
 }
 
 void display_films(const char *film_data) {
@@ -487,14 +497,20 @@ void show_search_menu(int sock) {
     
     while (1) {
         clear_screen();
-        printf("===== MENU RICERCA FILM =====\n");
+        view_catalogo(sock);
+        printf("\n===== MENU RICERCA FILM =====\n");
         printf("1. Cerca per titolo\n");
         printf("2. Cerca per genere\n");
         printf("3. Mostra i film più popolari\n");
         printf("4. Torna al menu principale\n");
         printf("Scelta: ");
-        scanf("%d", &choice);
-        getchar(); // Consuma il carattere newline
+        if (scanf("%d", &choice) != 1) {
+            // Input non valido (non è un numero)
+            while (getchar() != '\n'); // Pulisci il buffer di input
+            choice = 0; // Imposta una scelta non valida per entrare nel default
+        } else {
+            getchar(); // Consuma il carattere newline solo se l'input era valido
+        }
         
         switch (choice) {
             case 1:

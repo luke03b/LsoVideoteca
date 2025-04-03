@@ -86,7 +86,7 @@ int main() {
             free(args);
         } else {
             thread_count++;
-            printf("Client connesso. Thread attivi: %d\n", thread_count);
+            printf("Client connesso\n");
         }
         
         // Pulizia dei thread terminati
