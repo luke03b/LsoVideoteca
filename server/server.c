@@ -11,7 +11,12 @@
 #define PORT 8080
 #define MAX_CLIENTS 10
 
+void clear_screen() {
+    printf("\033[H\033[J");
+}
+
 int main() {
+    clear_screen();
     int server_fd, new_socket;
     struct sockaddr_in address;
     int addrlen = sizeof(address);

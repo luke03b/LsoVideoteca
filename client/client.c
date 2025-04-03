@@ -14,12 +14,16 @@ void do_login(int sock);
 // Funzione per effettuare la registrazione
 void do_registration(int sock);
 
+// Funzione per mostrare il menu principale dopo il login
+void show_main_menu(int sock, char *username);
+
 // Funzione per pulire lo schermo
 void clear_screen() {
     printf("\033[H\033[J");
 }
 
 int main() {
+    clear_screen();
     int sock = 0;
     struct sockaddr_in serv_addr;
     char buffer[BUFFER_SIZE] = {0};
@@ -49,13 +53,13 @@ int main() {
     
     // Leggi messaggio di benvenuto dal server
     read(sock, buffer, BUFFER_SIZE);
-    printf("Server: %s\n", buffer);
+    printf("Server: %s\n\n", buffer);
     
     int choice = 0;
     
     // Loop principale del menu
     while (1) {
-        printf("\n===== MENU PRINCIPALE =====\n");
+        printf("===== MENU AUTENTICAZIONE =====\n");
         printf("1. Login\n");
         printf("2. Registrazione\n");
         printf("3. Esci\n");
@@ -115,18 +119,19 @@ void do_login(int sock) {
     if (strcmp(buffer, "AUTH_OK") == 0) {
         printf("===== LOGIN RIUSCITO =====\n");
         printf("Ho effettuato il login\n");
-        printf("\nPremi invio per continuare...");
-        getchar();
+        show_main_menu(sock, username);
     } else if (strcmp(buffer, "AUTH_FAIL") == 0) {
         printf("===== ERRORE =====\n");
         printf("Username o password non validi!\n");
         printf("\nPremi invio per continuare...");
         getchar();
+        clear_screen();
     } else {
         printf("===== ERRORE =====\n");
         printf("Errore nella comunicazione con il server: %s\n", buffer);
         printf("\nPremi invio per continuare...");
         getchar();
+        clear_screen();
     }
 }
 
@@ -165,15 +170,68 @@ void do_registration(int sock) {
         printf("Ho effettuato la registrazione\n");
         printf("\nPremi invio per continuare...");
         getchar();
+        clear_screen();
     } else if (strcmp(buffer, "REGISTRATION_FAIL") == 0) {
         printf("===== ERRORE =====\n");
         printf("Username o password non validi. Errore nella registrazione!\n");
         printf("\nPremi invio per continuare...");
         getchar();
+        clear_screen();
     } else {
         printf("===== ERRORE =====\n");
         printf("Errore nella comunicazione con il server: %s\n", buffer);
         printf("\nPremi invio per continuare...");
         getchar();
+        clear_screen();
+    }
+}
+
+void show_main_menu(int sock, char *username) {
+    int choice = 0;
+    // Loop principale del menu
+    while (1) {
+        clear_screen();
+        printf("===== MENU PRINCIPALE =====\n");
+        printf("1. Mostra catalogo\n");
+        printf("2. Cerca Film\n");
+        printf("3. Mostra carrello\n");
+        printf("4. Mostra notifiche\n");
+        printf("5. Logout\n");
+        printf("Scelta: ");
+        scanf("%d", &choice);
+        getchar(); // Consuma il carattere newline
+        
+        switch (choice) {
+            case 1:
+                printf("Funzione non implementata\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
+                break;
+            case 2:
+                printf("Funzione non implementata\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
+                break;
+            case 3:
+                printf("Funzione non implementata\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
+                break;
+            case 4:
+                printf("Funzione non implementata\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
+                break;
+            case 5:
+                printf("Arrivederci\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
+                clear_screen();
+                return;
+            default:
+                printf("Scelta non valida. Riprova.\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
+        }
     }
 }
