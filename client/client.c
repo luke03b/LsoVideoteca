@@ -17,6 +17,12 @@ void do_registration(int sock);
 // Funzione per mostrare il menu principale dopo il login
 void show_main_menu(int sock, char *username);
 
+// Funzione per ricevere il catalogo
+void view_catalogo(int sock);
+
+// Funzione per visualizzare i film in un formato leggibile
+void display_films(const char *film_data);
+
 // Funzione per pulire lo schermo
 void clear_screen() {
     printf("\033[H\033[J");
@@ -203,9 +209,7 @@ void show_main_menu(int sock, char *username) {
         
         switch (choice) {
             case 1:
-                printf("Funzione non implementata\n");
-                printf("\nPremi invio per continuare...");
-                getchar();
+                view_catalogo(sock);
                 break;
             case 2:
                 printf("Funzione non implementata\n");
@@ -234,4 +238,108 @@ void show_main_menu(int sock, char *username) {
                 getchar();
         }
     }
+}
+
+// Funzione per visualizzare il catalogo
+// Funzione per richiedere e visualizzare il catalogo film
+void view_catalogo(int sock) {
+    char request[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE * 10] = {0};
+    int bytes_received;
+    
+    clear_screen();
+    printf("===== CATALOGO FILM =====\n\n");
+    
+    snprintf(request, BUFFER_SIZE, "CATALOGO");
+    send(sock, request, strlen(request), 0);
+    
+    bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
+    
+    if (bytes_received <= 0) {
+        printf("Errore nella ricezione dei dati dal server.\n");
+        printf("\nPremi invio per continuare...");
+        getchar(); // Attende che l'utente prema invio
+        return;
+    }
+    
+    buffer[bytes_received] = '\0';
+    
+    if (strncmp(buffer, "FILM_FAIL", 9) == 0) {
+        printf("Errore: Impossibile recuperare il catalogo film.\n");
+    } else {
+        display_films(buffer);
+    }
+    
+    printf("\nPremi invio per tornare al menu principale...");
+    getchar(); // Attende che l'utente prema invio
+}
+
+void display_films(const char *film_data) {
+    char *data = strdup(film_data);
+    if (data == NULL) {
+        printf("Errore: memoria insufficiente.\n");
+        return;
+    }
+    
+    char *token;
+    char *rest = data;
+    int film_count = 0;
+    
+    token = strtok_r(rest, "\n", &rest);
+    if (token != NULL) {
+        film_count = atoi(token);
+        printf("Trovati %d film:\n\n", film_count);
+    }
+    
+    char titolo[100] = "";
+    char copie_disponibili[10] = "";
+    char genere[50] = "";
+    int film_index = 0;
+    
+    while ((token = strtok_r(rest, "\n", &rest)) != NULL) {
+        if (strcmp(token, "---") == 0) {
+            // Stampa il film corrente
+            if (titolo[0] != '\0') {
+                printf("Film #%d\n", ++film_index);
+                printf("\tTitolo: %s\n", titolo);
+                printf("\tGenere: %s\n", genere);
+                printf("\tCopie Disponibili: %s\n\n", copie_disponibili);
+                
+                // Resetta i campi per il prossimo film
+                titolo[0] = '\0';
+                genere[0] = '\0';
+                copie_disponibili[0] = '\0';
+            }
+            continue;
+        }
+        
+        char *key = token;
+        char *value = strchr(token, ':');
+        
+        if (value != NULL) {
+            *value = '\0';  // Termina la chiave
+            value += 2;     // Salta il ':' e lo spazio
+            
+            if (strcasecmp(key, "titolo") == 0) {
+                strncpy(titolo, value, sizeof(titolo) - 1);
+                titolo[sizeof(titolo) - 1] = '\0';
+            } else if (strcasecmp(key, "genere") == 0) {
+                strncpy(genere, value, sizeof(genere) - 1);
+                genere[sizeof(genere) - 1] = '\0';
+            } else if (strcasecmp(key, "copie_disponibili") == 0) {
+                strncpy(copie_disponibili, value, sizeof(copie_disponibili) - 1);
+                copie_disponibili[sizeof(copie_disponibili) - 1] = '\0';
+            }
+        }
+    }
+    
+    // Stampa l'ultimo film se c'è
+    if (titolo[0] != '\0') {
+        printf("Film #%d\n", ++film_index);
+        printf("\tTitolo: %s\n", titolo);
+        printf("\tGenere: %s\n", genere);
+        printf("\tCopie Disponibili: %s\n", copie_disponibili);
+    }
+    
+    free(data);
 }
