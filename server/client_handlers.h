@@ -22,4 +22,7 @@ void *handle_client(void *arg);
 // Funzione per gestire le richieste di login (implementata in auth.c)
 void handle_login_request(int client_socket, PGconn *conn, char *credentials);
 
+// Funzione per gestire le richieste di registrazione (implementata in auth.c)
+void handle_registration_request(int client_socket, PGconn *conn, char *credentials);
+
 #endif

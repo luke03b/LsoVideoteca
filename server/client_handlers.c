@@ -19,6 +19,8 @@ void *handle_client(void *arg) {
         // Controllo se il messaggio è una richiesta di login
         if (strncmp(buffer, "LOGIN:", 6) == 0) {
             handle_login_request(client_socket, conn, buffer + 6);
+        } else if (strncmp(buffer, "REGISTRAZIONE:", 14) == 0) {
+            handle_registration_request(client_socket, conn, buffer + 14);
         } else {
             // Gestisci altri comandi se necessario
             send(client_socket, "COMANDO_SCONOSCIUTO", 19, 0);

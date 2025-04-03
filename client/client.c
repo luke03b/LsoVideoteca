@@ -11,6 +11,9 @@
 // Funzione per effettuare il login
 void do_login(int sock);
 
+// Funzione per effettuare la registrazione
+void do_registration(int sock);
+
 // Funzione per pulire lo schermo
 void clear_screen() {
     printf("\033[H\033[J");
@@ -54,7 +57,8 @@ int main() {
     while (1) {
         printf("\n===== MENU PRINCIPALE =====\n");
         printf("1. Login\n");
-        printf("2. Esci\n");
+        printf("2. Registrazione\n");
+        printf("3. Esci\n");
         printf("Scelta: ");
         scanf("%d", &choice);
         getchar(); // Consuma il carattere newline
@@ -64,6 +68,9 @@ int main() {
                 do_login(sock);
                 break;
             case 2:
+                do_registration(sock);
+                break;
+            case 3:
                 close(sock);
                 printf("Disconnessione dal server. Arrivederci!\n");
                 return 0;
@@ -113,6 +120,54 @@ void do_login(int sock) {
     } else if (strcmp(buffer, "AUTH_FAIL") == 0) {
         printf("===== ERRORE =====\n");
         printf("Username o password non validi!\n");
+        printf("\nPremi invio per continuare...");
+        getchar();
+    } else {
+        printf("===== ERRORE =====\n");
+        printf("Errore nella comunicazione con il server: %s\n", buffer);
+        printf("\nPremi invio per continuare...");
+        getchar();
+    }
+}
+
+// Funzione per effettuare la registrazione
+void do_registration(int sock) {
+    char username[100];
+    char password[100];
+    char request[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE] = {0};
+    
+    clear_screen();
+    printf("===== PAGINA DI REGISTRAZIONE =====\n");
+    
+    printf("Username: ");
+    fgets(username, sizeof(username), stdin);
+    username[strcspn(username, "\n")] = 0; // Rimuovi il newline
+    
+    printf("Password: ");
+    fgets(password, sizeof(password), stdin);
+    password[strcspn(password, "\n")] = 0; // Rimuovi il newline
+    
+    // Crea la richiesta di registrazione
+    snprintf(request, BUFFER_SIZE, "REGISTRAZIONE:%s:%s", username, password);
+    
+    // Invia la richiesta al server
+    send(sock, request, strlen(request), 0);
+    
+    // Ricevi la risposta
+    read(sock, buffer, BUFFER_SIZE);
+    
+    clear_screen();
+    
+    // Controlla la risposta del server
+    if (strcmp(buffer, "REGISTRATION_OK") == 0) {
+        printf("===== REGISTRAZIONE RIUSCITA =====\n");
+        printf("Ho effettuato la registrazione\n");
+        printf("\nPremi invio per continuare...");
+        getchar();
+    } else if (strcmp(buffer, "REGISTRATION_FAIL") == 0) {
+        printf("===== ERRORE =====\n");
+        printf("Username o password non validi. Errore nella registrazione!\n");
         printf("\nPremi invio per continuare...");
         getchar();
     } else {
