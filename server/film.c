@@ -71,7 +71,7 @@ int get_films(PGconn *conn, Film *films, int max_films) {
     
     // Crea la query per ottenere i film
     snprintf(query, BUFFER_SIZE, 
-             "SELECT titolo, genere, copie_disponibili FROM film ORDER BY titolo LIMIT %d", 
+             "SELECT id, titolo, genere, copie_disponibili FROM film ORDER BY titolo LIMIT %d", 
              max_films);
     
     // Esegui la query
@@ -88,13 +88,17 @@ int get_films(PGconn *conn, Film *films, int max_films) {
     
     // Riempi l'array di film
     for (int i = 0; i < num_films; i++) {
-        strncpy(films[i].titolo, PQgetvalue(result, i, 0), sizeof(films[i].titolo) - 1);
+        // Aggiungi l'ID del film
+        strncpy(films[i].id, PQgetvalue(result, i, 0), sizeof(films[i].id) - 1);
+        films[i].id[sizeof(films[i].id) - 1] = '\0';
+        
+        strncpy(films[i].titolo, PQgetvalue(result, i, 1), sizeof(films[i].titolo) - 1);
         films[i].titolo[sizeof(films[i].titolo) - 1] = '\0';
         
-        strncpy(films[i].genere, PQgetvalue(result, i, 1), sizeof(films[i].genere) - 1);
+        strncpy(films[i].genere, PQgetvalue(result, i, 2), sizeof(films[i].genere) - 1);
         films[i].genere[sizeof(films[i].genere) - 1] = '\0';
         
-        films[i].copie_disponibili = atoi(PQgetvalue(result, i, 2));
+        films[i].copie_disponibili = atoi(PQgetvalue(result, i, 3));
     }
     
     PQclear(result);
@@ -112,7 +116,7 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
         case SEARCH_TITLE:
             // Ricerca per titolo (case insensitive)
             snprintf(sql_query, BUFFER_SIZE, 
-                    "SELECT titolo, genere, copie_disponibili FROM film "
+                    "SELECT id, titolo, genere, copie_disponibili FROM film "
                     "WHERE LOWER(titolo) LIKE LOWER('%%%s%%') "
                     "ORDER BY titolo LIMIT %d", 
                     query, max_films);
@@ -121,7 +125,7 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
         case SEARCH_GENRE:
             // Ricerca per genere (case insensitive)
             snprintf(sql_query, BUFFER_SIZE, 
-                    "SELECT titolo, genere, copie_disponibili FROM film "
+                    "SELECT id, titolo, genere, copie_disponibili FROM film "
                     "WHERE LOWER(genere) LIKE LOWER('%%%s%%') "
                     "ORDER BY titolo LIMIT %d", 
                     query, max_films);
@@ -130,7 +134,7 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
         case SEARCH_POPULARITY:
             // Ricerca per popolarità (film più noleggiati)
             snprintf(sql_query, BUFFER_SIZE, 
-                    "SELECT titolo, genere, copie_disponibili FROM film "
+                    "SELECT id, titolo, genere, copie_disponibili FROM film "
                     "ORDER BY noleggi_totali DESC LIMIT %d", 
                     max_films);
             break;
@@ -154,13 +158,17 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
     
     // Riempi l'array di film
     for (int i = 0; i < num_films; i++) {
-        strncpy(films[i].titolo, PQgetvalue(result, i, 0), sizeof(films[i].titolo) - 1);
+        // Aggiungi l'ID del film
+        strncpy(films[i].id, PQgetvalue(result, i, 0), sizeof(films[i].id) - 1);
+        films[i].id[sizeof(films[i].id) - 1] = '\0';
+        
+        strncpy(films[i].titolo, PQgetvalue(result, i, 1), sizeof(films[i].titolo) - 1);
         films[i].titolo[sizeof(films[i].titolo) - 1] = '\0';
         
-        strncpy(films[i].genere, PQgetvalue(result, i, 1), sizeof(films[i].genere) - 1);
+        strncpy(films[i].genere, PQgetvalue(result, i, 2), sizeof(films[i].genere) - 1);
         films[i].genere[sizeof(films[i].genere) - 1] = '\0';
         
-        films[i].copie_disponibili = atoi(PQgetvalue(result, i, 2));
+        films[i].copie_disponibili = atoi(PQgetvalue(result, i, 3));
     }
     
     PQclear(result);
@@ -180,6 +188,11 @@ void format_films_data(Film *films, int num_films, char *output, size_t output_s
     
     // Scrivi i dati di ogni film
     for (int i = 0; i < num_films; i++) {
+        // ID
+        chars_written = snprintf(ptr, remaining, "id: %s\n", films[i].id);
+        ptr += chars_written;
+        remaining -= chars_written;
+        
         // Titolo
         chars_written = snprintf(ptr, remaining, "titolo: %s\n", films[i].titolo);
         ptr += chars_written;

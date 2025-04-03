@@ -20,6 +20,7 @@ typedef enum {
 
 // Struttura per rappresentare i dati di un film
 typedef struct {
+    char id[10];
     char titolo[256];
     char genere[101];
     int copie_disponibili;

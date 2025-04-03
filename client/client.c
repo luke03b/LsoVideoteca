@@ -210,21 +210,22 @@ void show_main_menu(int sock, char *username) {
     while (1) {
         clear_screen();
         printf("===== MENU PRINCIPALE =====\n");
-        printf("1. Mostra catalogo\n");
-        printf("2. Cerca Film\n");
-        printf("3. Mostra carrello\n");
-        printf("4. Mostra notifiche\n");
-        printf("5. Logout\n");
+        printf("1. Film\n");
+        printf("2. Mostra carrello\n");
+        printf("3. Mostra notifiche\n");
+        printf("4. Logout\n");
         printf("Scelta: ");
         scanf("%d", &choice);
         getchar(); // Consuma il carattere newline
         
         switch (choice) {
             case 1:
-                view_catalogo(sock);
+                show_search_menu(sock);
                 break;
             case 2:
-                show_search_menu(sock);
+                printf("Funzione non implementata\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
                 break;
             case 3:
                 printf("Funzione non implementata\n");
@@ -232,11 +233,6 @@ void show_main_menu(int sock, char *username) {
                 getchar();
                 break;
             case 4:
-                printf("Funzione non implementata\n");
-                printf("\nPremi invio per continuare...");
-                getchar();
-                break;
-            case 5:
                 printf("Arrivederci\n");
                 printf("\nPremi invio per continuare...");
                 getchar();
@@ -302,10 +298,11 @@ void display_films(const char *film_data) {
     }
     
     // Intestazione della tabella
-    printf("+---------------------------+------------------+-------------------+\n");
-    printf("| %-25s | %-16s | %-17s |\n", "TITOLO", "GENERE", "COPIE DISPONIBILI");
-    printf("+---------------------------+------------------+-------------------+\n");
+    printf("+-----+---------------------------+------------------+-------------------+\n");
+    printf("| %-3s | %-25s | %-16s | %-17s |\n", "ID", "TITOLO", "GENERE", "COPIE DISPONIBILI");
+    printf("+-----+---------------------------+------------------+-------------------+\n");
     
+    char id[10] = "";
     char titolo[100] = "";
     char copie_disponibili[10] = "";
     char genere[50] = "";
@@ -314,12 +311,14 @@ void display_films(const char *film_data) {
         if (strcmp(token, "---") == 0) {
             // Stampa il film corrente in formato tabella
             if (titolo[0] != '\0') {
-                printf("| %-25s | %-16s | %-17s |\n", 
+                printf("| %-3s | %-25s | %-16s | %-17s |\n", 
+                       id,
                        titolo, 
                        genere, 
                        copie_disponibili);
                 
                 // Resetta i campi per il prossimo film
+                id[0] = '\0';
                 titolo[0] = '\0';
                 genere[0] = '\0';
                 copie_disponibili[0] = '\0';
@@ -334,7 +333,10 @@ void display_films(const char *film_data) {
             *value = '\0';  // Termina la chiave
             value += 2;     // Salta il ':' e lo spazio
             
-            if (strcasecmp(key, "titolo") == 0) {
+            if (strcasecmp(key, "id") == 0) {
+                strncpy(id, value, sizeof(id) - 1);
+                id[sizeof(id) - 1] = '\0';
+            } else if (strcasecmp(key, "titolo") == 0) {
                 strncpy(titolo, value, sizeof(titolo) - 1);
                 titolo[sizeof(titolo) - 1] = '\0';
             } else if (strcasecmp(key, "genere") == 0) {
@@ -349,14 +351,15 @@ void display_films(const char *film_data) {
     
     // Stampa l'ultimo film se c'è
     if (titolo[0] != '\0') {
-        printf("| %-21s | %-16s | %-17s |\n", 
+        printf("| %-3s | %-25s | %-16s | %-17s |\n", 
+               id, 
                titolo, 
                genere, 
                copie_disponibili);
     }
     
     // Chiudi la tabella
-    printf("+---------------------------+------------------+-------------------+\n");
+    printf("+-----+---------------------------+------------------+-------------------+\n");
     
     free(data);
 }
