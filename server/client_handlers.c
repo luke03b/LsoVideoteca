@@ -21,8 +21,10 @@ void *handle_client(void *arg) {
             handle_login_request(client_socket, conn, buffer + 6);
         } else if (strncmp(buffer, "REGISTRAZIONE:", 14) == 0) {
             handle_registration_request(client_socket, conn, buffer + 14);
-        } else if (strcmp(buffer, "CATALOGO") == 0){
+        } else if (strcmp(buffer, "CATALOGO") == 0) {
             handle_catalogo_request(client_socket, conn);
+        } else if (strncmp(buffer, "SEARCH:", 7) == 0) {
+            handle_search_request(client_socket, conn, buffer + 7);
         } else {
             // Gestisci altri comandi se necessario
             send(client_socket, "COMANDO_SCONOSCIUTO", 19, 0);
