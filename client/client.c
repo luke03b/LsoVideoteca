@@ -50,6 +50,9 @@ void check_out(int sock);
 // Funzione per visualizzare i film noleggiati
 void retrieve_loaned_films(int sock);
 
+// Funzione per restituire un film
+void restituisci_film(int sock);
+
 // Funzione per pulire lo schermo
 void clear_screen() {
     printf("\033[H\033[J");
@@ -340,8 +343,8 @@ void show_cart(int sock) {
         int choice = 0;
         // Mostra le opzioni del carrello
         printf("\n\n===== OPZIONI =====\n");
-        printf("1. Svuota Carrello\n");
-        printf("2. Effettua il Check-out\n");
+        printf("1. Effettua il Check-out\n");
+        printf("2. Svuota Carrello\n");
         printf("3. Torna al menu principale\n");
         printf("Scelta: ");
         if (scanf("%d", &choice) != 1) {
@@ -354,15 +357,16 @@ void show_cart(int sock) {
 
         switch (choice) {
             case 1:
+                check_out(sock);
+                printf("\nPremi invio per continuare...");
+                getchar();
+                break;
+            case 2:
                 num_film = 0;
                 printf("\nCarrello svuotato.");
                 printf("\nPremi invio per continuare...");
                 getchar();
                 break;
-            case 2:
-                check_out(sock);
-                printf("\nPremi invio per continuare...");
-                getchar();
             case 3:
                 return;
             default:
@@ -698,36 +702,107 @@ int is_film_already_in_cart(int id_film) {
 
 void retrieve_loaned_films(int sock) {
 
-    clear_screen();
-    printf("===== FILM NOLEGGIATI =====\n\n");
-    char request[BUFFER_SIZE];
-    char buffer[BUFFER_SIZE * 20] = {0};
-    int bytes_received;
+    while (1)
+    {
+        clear_screen();
+        printf("===== FILM NOLEGGIATI =====\n\n");
+        char request[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE * 20] = {0};
+        int bytes_received;
+        
+        // Crea la richiesta di ricerca (5 = ricerca film noleggiati utente loggato)
+        snprintf(request, BUFFER_SIZE, "SEARCH:5:%d", id_utente_loggato);
+        send(sock, request, strlen(request), 0);
+        
+        bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
+        
+        if (bytes_received <= 0) {
+            printf("Errore nella ricezione dei dati dal server.\n");
+            printf("\nPremi invio per continuare...");
+            getchar();
+            return;
+        }
+        
+        buffer[bytes_received] = '\0';
+        
+        if (strncmp(buffer, "SEARCH_FAIL", 11) == 0) {
+            printf("Nessun film noleggiato\n");
+            printf("\nPremi invio per tornare al menu principale...");
+            getchar();
+            return;
+        } else {
+            display_films(buffer, 0);
+        }
     
-    // Crea la richiesta di ricerca (5 = ricerca film noleggiati utente loggato)
-    snprintf(request, BUFFER_SIZE, "SEARCH:5:%d", id_utente_loggato);
-    send(sock, request, strlen(request), 0);
-    
-    bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
-    
-    if (bytes_received <= 0) {
-        printf("Errore nella ricezione dei dati dal server.\n");
+        int choice = 0;
+        // Mostra le opzioni del carrello
+        printf("\n\n===== OPZIONI =====\n");
+        printf("1. Restituisci film\n");
+        printf("2. Torna al menu principale\n");
+        printf("Scelta: ");
+
+        if (scanf("%d", &choice) != 1) {
+            // Input non valido (non è un numero)
+            while (getchar() != '\n'); // Pulisci il buffer di input
+            choice = 0; // Imposta una scelta non valida per entrare nel default
+        } else {
+            getchar(); // Consuma il carattere newline solo se l'input era valido
+        }
+
+
+        switch (choice) {
+            case 1:
+                // Funzione per restituire un film
+                restituisci_film(sock);
+                break;
+            case 2:
+                return;
+            default:
+                printf("Scelta non valida. Riprova.\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
+        }
+    }
+}
+
+void restituisci_film(int sock){
+    int id_film = 0;
+    printf("Inserisci l'ID del film da restituire: ");
+
+    if (scanf("%d", &id_film) != 1) {
+        // Input non valido (non è un numero)
+        while (getchar() != '\n'); // Pulisci il buffer di input
+        id_film = 0; // Imposta una scelta non valida per entrare nel default
+    } else {
+        getchar(); // Consuma il carattere newline solo se l'input era valido
+    }
+
+    // Controlla se l'ID del film è valido
+    if (id_film <= 0) {
+        printf("ID film non valido. Riprova.\n");
         printf("\nPremi invio per continuare...");
         getchar();
         return;
     }
-    
-    buffer[bytes_received] = '\0';
-    
-    if (strncmp(buffer, "SEARCH_FAIL", 11) == 0) {
-        printf("Nessun film noleggiato\n");
+
+    // Invia la richiesta di restituzione al server
+    char request[BUFFER_SIZE];
+    snprintf(request, BUFFER_SIZE, "RESTITUZIONE:%d:%d", id_utente_loggato, id_film);
+    send(sock, request, strlen(request), 0);
+
+    char buffer[BUFFER_SIZE] = {0};
+    read(sock, buffer, BUFFER_SIZE);
+
+    // Controlla la risposta del server
+    if (strcmp(buffer, "RETURN_OK") == 0) {
+        printf("Film con ID %d restituito con successo.\n", id_film);
+    } else if (strcmp(buffer, "RETURN_FAIL") == 0) {
+        printf("Errore nella restituzione del film.\n");
     } else {
-        display_films(buffer, 0);
+        printf("Errore nella comunicazione con il server: %s\n", buffer);
     }
 
-    
-
-    printf("\nPremi invio per tornare al menu principale...");
+    printf("\nPremi invio per continuare...");
     getchar();
 }
 

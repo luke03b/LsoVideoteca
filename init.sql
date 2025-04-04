@@ -109,6 +109,52 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+-- Funzione per gestire la restituzione di un film
+CREATE OR REPLACE FUNCTION restituisci_film(
+    p_id_utente INTEGER,
+    p_id_film INTEGER
+) RETURNS BOOLEAN AS $$
+DECLARE
+    v_noleggio_id INTEGER;
+BEGIN
+    -- Verifica se esiste un noleggio attivo per questo utente e film
+    SELECT id INTO v_noleggio_id
+    FROM noleggi
+    WHERE id_utente = p_id_utente 
+      AND id_film = p_id_film
+      AND restituito = FALSE
+    LIMIT 1;
+
+    -- Se non esiste un noleggio attivo, ritorna false
+    IF v_noleggio_id IS NULL THEN
+        RETURN FALSE;
+    END IF;
+
+    -- Inizia la transazione per garantire l'atomicità dell'operazione
+    BEGIN
+        -- Aggiorna la tabella noleggi impostando il film come restituito
+        UPDATE noleggi
+        SET restituito = TRUE,
+            data_restituzione = CURRENT_TIMESTAMP  -- Opzionale: aggiorna la data di restituzione con la data effettiva
+        WHERE id = v_noleggio_id;
+
+        -- Aggiorna la tabella film aumentando le copie disponibili
+        UPDATE film
+        SET copie_disponibili = copie_disponibili + 1
+        WHERE id = p_id_film;
+
+        -- Se tutto è andato bene, conferma la transazione
+        RETURN TRUE;
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- In caso di errori
+            ROLLBACK;
+            RAISE;
+    END;
+END;
+$$ LANGUAGE plpgsql;
+
+
 -- Insert some sample films
 INSERT INTO film (titolo, genere, copie_totali, copie_disponibili, noleggi_totali) VALUES
 ('Il Padrino', 'Drammatico', 5, 5, 0),

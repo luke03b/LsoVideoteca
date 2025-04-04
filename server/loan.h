@@ -17,4 +17,10 @@ void handle_loan_request(int client_socket, PGconn *conn, char *info);
 // Funzione per effettuare il noleggio
 int do_loan(PGconn *conn, const char *id_utente, const char *id_film);
 
+// Gestione richiesta restituzione
+void handle_return_request(int client_socket, PGconn *conn, char *info);
+
+// Funzione per effettuare la restituzione
+int return_loan(PGconn *conn, const char *id_utente, const char *id_film);
+
 #endif

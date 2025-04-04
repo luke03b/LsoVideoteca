@@ -27,6 +27,8 @@ void *handle_client(void *arg) {
             handle_search_request(client_socket, conn, buffer + 7);
         } else if (strncmp(buffer, "NOLEGGIO:", 9) == 0){
             handle_loan_request(client_socket, conn, buffer + 9);
+        } else if (strncmp(buffer, "RESTITUZIONE:", 13) == 0){
+            handle_return_request(client_socket, conn, buffer + 13);
         } else {
             // Gestisci altri comandi se necessario
             send(client_socket, "COMANDO_SCONOSCIUTO", 19, 0);
