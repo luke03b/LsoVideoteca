@@ -53,6 +53,9 @@ void retrieve_loaned_films(int sock);
 // Funzione per restituire un film
 void restituisci_film(int sock);
 
+// Funzione per mostrare le notifiche
+void show_notifications(int sock);
+
 // Funzione per pulire lo schermo
 void clear_screen() {
     printf("\033[H\033[J");
@@ -267,9 +270,7 @@ void show_main_menu(int sock, char *username) {
                 retrieve_loaned_films(sock);
                 break;
             case 4:
-                printf("Funzione non implementata\n");
-                printf("\nPremi invio per continuare...");
-                getchar();
+                show_notifications(sock);
                 break;
             case 5:
                 printf("Arrivederci\n");
@@ -282,6 +283,35 @@ void show_main_menu(int sock, char *username) {
                 printf("\nPremi invio per continuare...");
                 getchar();
         }
+    }
+}
+
+void show_notifications(int sock) {
+    char request[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE * 20] = {0};
+    int bytes_received;
+    clear_screen();
+
+    printf("===== NOTIFICHE =====\n");
+
+    snprintf(request, BUFFER_SIZE, "NOTIFICHE:%d", id_utente_loggato);
+    send(sock, request, strlen(request), 0);
+    read(sock, buffer, BUFFER_SIZE);
+    
+    // Controlla la risposta del server
+    if (strcmp(buffer, "NOTIFICATION_OK") == 0) {
+        printf("ATTENZIONE: Hai dei film da restituire oltre la data consentita\n");
+        printf("\nPremi invio per continuare...");
+        getchar();
+    } else if (strcmp(buffer, "NOTIFICATION_FAIL") == 0) {
+        printf("Non hai nuove notifiche\n");
+        printf("\nPremi invio per continuare...");
+        getchar();
+    } else {
+        printf("===== ERRORE =====\n");
+        printf("Errore nella comunicazione con il server: %s\n", buffer);
+        printf("\nPremi invio per continuare...");
+        getchar();
     }
 }
 

@@ -37,4 +37,7 @@ void handle_loan_request(int client_socket, PGconn *conn, char *info);
 // Funzione per gestire le richieste di restituzione film (implementata in loan.c)
 void handle_return_request(int client_socket, PGconn *conn, char *info);
 
+// Funzione per gestire le richieste di notifiche (implementata in notification.c)
+void handle_notification_request(int client_socket, PGconn *conn, char *id_utente_input);
+
 #endif

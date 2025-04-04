@@ -29,6 +29,8 @@ void *handle_client(void *arg) {
             handle_loan_request(client_socket, conn, buffer + 9);
         } else if (strncmp(buffer, "RESTITUZIONE:", 13) == 0){
             handle_return_request(client_socket, conn, buffer + 13);
+        } else if (strncmp(buffer, "NOTIFICHE:", 10) == 0){
+            handle_notification_request(client_socket, conn, buffer + 10);
         } else {
             // Gestisci altri comandi se necessario
             send(client_socket, "COMANDO_SCONOSCIUTO", 19, 0);
