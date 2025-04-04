@@ -15,7 +15,8 @@
 typedef enum {
     SEARCH_TITLE = 1,
     SEARCH_GENRE = 2,
-    SEARCH_POPULARITY = 3
+    SEARCH_POPULARITY = 3,
+    SEARCH_ID = 4
 } SearchType;
 
 // Struttura per rappresentare i dati di un film

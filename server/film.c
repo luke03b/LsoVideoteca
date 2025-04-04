@@ -138,6 +138,14 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
                     "ORDER BY noleggi_totali DESC LIMIT %d", 
                     max_films);
             break;
+
+        case SEARCH_ID:
+            // Ricerca per ID
+            snprintf(sql_query, BUFFER_SIZE, 
+                    "SELECT id, titolo, genere, copie_disponibili FROM film "
+                    "WHERE id IN (%s) ORDER BY id LIMIT 5", 
+                    query);
+            break;
             
         default:
             fprintf(stderr, "Tipo di ricerca non valido: %d\n", type);

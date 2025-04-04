@@ -35,10 +35,22 @@ void search_by_genre(int sock);
 // Funzione per cercare film più popolari
 void search_by_popularity(int sock);
 
+// Funzione per aggiungere un film al carrello
+void add_to_cart(int sock);
+
+// Funzione per mostrare il carrello
+void show_cart(int sock);
+
+// Funzione per controllare se un film è già nel carrello
+int is_film_already_in_cart(int id_film);
+
 // Funzione per pulire lo schermo
 void clear_screen() {
     printf("\033[H\033[J");
 }
+
+int carrello[5] = {0}; // Array per memorizzare gli ID dei film nel carrello
+int num_film = 0; // Numero di film nel carrello
 
 int main() {
     clear_screen();
@@ -218,7 +230,7 @@ void show_main_menu(int sock, char *username) {
     while (1) {
         clear_screen();
         printf("===== MENU PRINCIPALE =====\n");
-        printf("1. Film\n");
+        printf("1. Noleggia Film\n");
         printf("2. Mostra carrello\n");
         printf("3. Mostra notifiche\n");
         printf("4. Logout\n");
@@ -236,9 +248,7 @@ void show_main_menu(int sock, char *username) {
                 show_search_menu(sock);
                 break;
             case 2:
-                printf("Funzione non implementata\n");
-                printf("\nPremi invio per continuare...");
-                getchar();
+                show_cart(sock);
                 break;
             case 3:
                 printf("Funzione non implementata\n");
@@ -258,6 +268,95 @@ void show_main_menu(int sock, char *username) {
         }
     }
 }
+
+
+// Funzione per visualizzare film in base a un array di ID
+void show_cart(int sock) {
+    char request[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE * 20] = {0};
+    int bytes_received;
+
+    while (1)
+        {
+        clear_screen();
+        printf("===== CARRELLO =====\n\n");
+        
+        if (num_film <= 0) {
+            printf("Nessun film nel carrello.\n");
+            printf("\nPremi invio per tornare al menu principale...");
+            getchar();
+            return;
+        }
+        
+        // Costruiamo una stringa con tutti gli ID separati da virgole
+        char id_list[200] = {0};
+        for (int i = 0; i < num_film; i++) {
+            char id_str[10];
+            snprintf(id_str, sizeof(id_str), "%d", carrello[i]);
+            
+            // Aggiungi virgola se non è il primo ID
+            if (i > 0 && i < num_film) {
+                strcat(id_list, ",");
+            }
+            strcat(id_list, id_str);
+        }
+        
+        // Crea la richiesta di ricerca (3 = ricerca per ID multipli)
+        snprintf(request, BUFFER_SIZE, "SEARCH:4:%s", id_list);
+        send(sock, request, strlen(request), 0);
+        
+        bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
+        
+        if (bytes_received <= 0) {
+            printf("Errore nella ricezione dei dati dal server.\n");
+            printf("\nPremi invio per continuare...");
+            getchar();
+            return;
+        }
+        
+        buffer[bytes_received] = '\0';
+        
+        if (strncmp(buffer, "SEARCH_FAIL", 11) == 0) {
+            printf("Nessun film trovato con gli ID specificati.\n");
+        } else {
+            printf("Film trovati nel carrello:\n\n");
+            display_films(buffer);
+        }
+
+
+        int choice = 0;
+        // Mostra le opzioni del carrello
+        printf("\n\n===== OPZIONI =====\n");
+        printf("1. Svuota Carrello\n");
+        printf("2. Effettua il Check-out\n");
+        printf("3. Torna al menu principale\n");
+        printf("Scelta: ");
+        if (scanf("%d", &choice) != 1) {
+            // Input non valido (non è un numero)
+            while (getchar() != '\n'); // Pulisci il buffer di input
+            choice = 0; // Imposta una scelta non valida per entrare nel default
+        } else {
+            getchar(); // Consuma il carattere newline solo se l'input era valido
+        }
+
+        switch (choice) {
+            case 1:
+                num_film = 0;
+                printf("\nCarrello svuotato.");
+                printf("\nPremi invio per continuare...");
+                getchar();
+                break;
+            case 3:
+                return;
+            default:
+                printf("Scelta non valida. Riprova.\n");
+                printf("\nPremi invio per continuare...");
+                getchar();
+        
+        }
+    }
+}
+
 
 // Funzione per visualizzare il catalogo
 // Funzione per richiedere e visualizzare il catalogo film
@@ -491,6 +590,56 @@ void search_by_popularity(int sock) {
     getchar();
 }
 
+void add_to_cart(int sock){
+    int id_film = 0;
+    printf("Inserisci l'ID del film da aggiungere al carrello: ");
+
+    if (scanf("%d", &id_film) != 1) {
+        // Input non valido (non è un numero)
+        while (getchar() != '\n'); // Pulisci il buffer di input
+        id_film = 0; // Imposta una scelta non valida per entrare nel default
+    } else {
+        getchar(); // Consuma il carattere newline solo se l'input era valido
+    }
+
+    // Controlla se l'ID del film è valido
+    if (id_film <= 0) {
+        printf("ID film non valido. Riprova.\n");
+        printf("\nPremi invio per continuare...");
+        getchar();
+        return;
+    }
+
+    // Controlla se il film è già presente nel carrello
+    if (is_film_already_in_cart(id_film)) {
+        printf("Il film con ID %d è già presente nel carrello.\n", id_film);
+        printf("\nPremi invio per continuare...");
+        getchar();
+        return;
+    }
+
+    // Controlla se il carrello è pieno
+    if (num_film < 5) {
+        carrello[num_film] = id_film;
+        num_film++;
+        printf("Film con ID %d aggiunto al carrello.\n", id_film);
+    } else {
+        printf("Carrello pieno. Non puoi aggiungere più di 5 film.\n");
+    }
+
+    printf("\nPremi invio per continuare...");
+    getchar();
+}
+
+int is_film_already_in_cart(int id_film) {
+    for (int i = 0; i < num_film; i++) {
+        if (carrello[i] == id_film) {
+            return 1; // Film già presente nel carrello
+        }
+    }
+    return 0; // Film non presente nel carrello
+}
+
 // Funzione per mostrare il menu di ricerca film
 void show_search_menu(int sock) {
     int choice = 0;
@@ -499,10 +648,11 @@ void show_search_menu(int sock) {
         clear_screen();
         view_catalogo(sock);
         printf("\n===== MENU RICERCA FILM =====\n");
-        printf("1. Cerca per titolo\n");
-        printf("2. Cerca per genere\n");
-        printf("3. Mostra i film più popolari\n");
-        printf("4. Torna al menu principale\n");
+        printf("1. Aggiungi al carrello tramite ID\n");
+        printf("2. Cerca per titolo\n");
+        printf("3. Cerca per genere\n");
+        printf("4. Mostra i film più popolari\n");
+        printf("5. Torna al menu principale\n");
         printf("Scelta: ");
         if (scanf("%d", &choice) != 1) {
             // Input non valido (non è un numero)
@@ -514,15 +664,18 @@ void show_search_menu(int sock) {
         
         switch (choice) {
             case 1:
-                search_by_title(sock);
+                add_to_cart(sock);
                 break;
             case 2:
-                search_by_genre(sock);
+                search_by_title(sock);
                 break;
             case 3:
-                search_by_popularity(sock);
+                search_by_genre(sock);
                 break;
             case 4:
+                search_by_popularity(sock);
+                break;
+            case 5:
                 return;
             default:
                 printf("Scelta non valida. Riprova.\n");
