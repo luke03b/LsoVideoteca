@@ -19,16 +19,6 @@ CREATE TABLE IF NOT EXISTS utenti (
     password VARCHAR(50) NOT NULL
 );
 
--- Notification table
-CREATE TABLE IF NOT EXISTS notifiche (
-    id SERIAL PRIMARY KEY,
-    id_utente INTEGER NOT NULL,
-    messaggio TEXT NOT NULL,
-    data_invio TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    visualizzato BOOLEAN NOT NULL DEFAULT FALSE,
-    FOREIGN KEY (id_utente) REFERENCES utenti(id) ON DELETE CASCADE
-);
-
 -- Rental table
 CREATE TABLE IF NOT EXISTS noleggi (
     id SERIAL PRIMARY KEY,
