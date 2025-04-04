@@ -31,4 +31,7 @@ void handle_catalogo_request(int client_socket, PGconn *conn);
 // Funzione per gestire le richieste di ricerca film (implementata in film.c)
 void handle_search_request(int client_socket, PGconn *conn, char *search_params);
 
+// Funzione per gestire le richieste di noleggio film (implementata in loan.c)
+void handle_loan_request(int client_socket, PGconn *conn, char *info);
+
 #endif

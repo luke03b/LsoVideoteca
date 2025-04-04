@@ -44,11 +44,15 @@ void show_cart(int sock);
 // Funzione per controllare se un film è già nel carrello
 int is_film_already_in_cart(int id_film);
 
+// Funzione per effettuare il check-out
+void check_out(int sock);
+
 // Funzione per pulire lo schermo
 void clear_screen() {
     printf("\033[H\033[J");
 }
 
+int id_utente_loggato = 0; // ID dell'utente loggato
 int carrello[5] = {0}; // Array per memorizzare gli ID dei film nel carrello
 int num_film = 0; // Numero di film nel carrello
 
@@ -154,17 +158,19 @@ void do_login(int sock) {
     clear_screen();
     
     // Controlla la risposta del server
-    if (strcmp(buffer, "AUTH_OK") == 0) {
-        printf("===== LOGIN RIUSCITO =====\n");
-        printf("Ho effettuato il login\n");
+    if (strncmp(buffer, "AUTH_OK:", 8) == 0) {
+        // Estrai l'ID utente dalla risposta
+        id_utente_loggato = atoi(buffer + 8);
         show_main_menu(sock, username);
     } else if (strcmp(buffer, "AUTH_FAIL") == 0) {
+        id_utente_loggato = -1;  // Assicurati che l'ID sia -1 se il login fallisce
         printf("===== ERRORE =====\n");
         printf("Username o password non validi!\n");
         printf("\nPremi invio per continuare...");
         getchar();
         clear_screen();
     } else {
+        id_utente_loggato = -1;  // Assicurati che l'ID sia -1 se c'è un errore
         printf("===== ERRORE =====\n");
         printf("Errore nella comunicazione con il server: %s\n", buffer);
         printf("\nPremi invio per continuare...");
@@ -229,7 +235,7 @@ void show_main_menu(int sock, char *username) {
     // Loop principale del menu
     while (1) {
         clear_screen();
-        printf("===== MENU PRINCIPALE =====\n");
+        printf("===== BENVENUTO =====\n");
         printf("1. Noleggia Film\n");
         printf("2. Mostra carrello\n");
         printf("3. Mostra notifiche\n");
@@ -346,6 +352,10 @@ void show_cart(int sock) {
                 printf("\nPremi invio per continuare...");
                 getchar();
                 break;
+            case 2:
+                check_out(sock);
+                printf("\nPremi invio per continuare...");
+                getchar();
             case 3:
                 return;
             default:
@@ -355,6 +365,33 @@ void show_cart(int sock) {
         
         }
     }
+}
+
+void check_out(int sock){
+    for (int i = 0; i < num_film; i++)
+    {
+        char request[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
+        // Crea la richiesta di login
+        snprintf(request, BUFFER_SIZE, "NOLEGGIO:%d:%d", id_utente_loggato, carrello[i]);
+        
+        // Invia la richiesta al server
+        send(sock, request, strlen(request), 0);
+        
+        // Ricevi la risposta
+        read(sock, buffer, BUFFER_SIZE);
+        
+        // Controlla la risposta del server
+        if (strcmp(buffer, "LOAN_OK") == 0) {
+            printf("Hai noleggiato il film con ID %d\n", carrello[i]);
+        } else if (strcmp(buffer, "LOAN_FAIL") == 0) {
+            printf("Errore nel noleggio del film\n");
+        } else {
+            printf("Errore nella comunicazione con il server: %s\n", buffer);
+        }
+    }
+    num_film = 0; // Svuota il carrello dopo il check-out
+    printf("Carrello svuotato dopo il check-out.\n");
 }
 
 

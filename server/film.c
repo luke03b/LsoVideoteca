@@ -146,7 +146,7 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
                     "WHERE id IN (%s) ORDER BY id LIMIT 5", 
                     query);
             break;
-            
+
         default:
             fprintf(stderr, "Tipo di ricerca non valido: %d\n", type);
             return 0;
