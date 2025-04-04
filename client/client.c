@@ -21,7 +21,7 @@ void show_main_menu(int sock, char *username);
 void view_catalogo(int sock);
 
 // Funzione per visualizzare i film in un formato leggibile
-void display_films(const char *film_data);
+void display_films(const char *film_data, int options);
 
 // Funzione per mostrare il menu di ricerca film
 void show_search_menu(int sock);
@@ -46,6 +46,9 @@ int is_film_already_in_cart(int id_film);
 
 // Funzione per effettuare il check-out
 void check_out(int sock);
+
+// Funzione per visualizzare i film noleggiati
+void retrieve_loaned_films(int sock);
 
 // Funzione per pulire lo schermo
 void clear_screen() {
@@ -237,9 +240,10 @@ void show_main_menu(int sock, char *username) {
         clear_screen();
         printf("===== BENVENUTO =====\n");
         printf("1. Noleggia Film\n");
-        printf("2. Mostra carrello\n");
-        printf("3. Mostra notifiche\n");
-        printf("4. Logout\n");
+        printf("2. Carrello\n");
+        printf("3. Film noleggiati\n");
+        printf("4. Notifiche\n");
+        printf("5. Logout\n");
         printf("Scelta: ");
         if (scanf("%d", &choice) != 1) {
             // Input non valido (non è un numero)
@@ -257,11 +261,14 @@ void show_main_menu(int sock, char *username) {
                 show_cart(sock);
                 break;
             case 3:
+                retrieve_loaned_films(sock);
+                break;
+            case 4:
                 printf("Funzione non implementata\n");
                 printf("\nPremi invio per continuare...");
                 getchar();
                 break;
-            case 4:
+            case 5:
                 printf("Arrivederci\n");
                 printf("\nPremi invio per continuare...");
                 getchar();
@@ -326,7 +333,7 @@ void show_cart(int sock) {
             printf("Nessun film trovato con gli ID specificati.\n");
         } else {
             printf("Film trovati nel carrello:\n\n");
-            display_films(buffer);
+            display_films(buffer, 1);
         }
 
 
@@ -422,11 +429,11 @@ void view_catalogo(int sock) {
     if (strncmp(buffer, "FILM_FAIL", 9) == 0) {
         printf("Errore: Impossibile recuperare il catalogo film.\n");
     } else {
-        display_films(buffer);
+        display_films(buffer, 1);
     }
 }
 
-void display_films(const char *film_data) {
+void display_films(const char *film_data, int options) {
     char *data = strdup(film_data);
     if (data == NULL) {
         printf("Errore: memoria insufficiente.\n");
@@ -442,16 +449,25 @@ void display_films(const char *film_data) {
         film_count = atoi(token);
         printf("Trovati %d film:\n\n", film_count);
     }
-    
-    // Intestazione della tabella
-    printf("+-----+---------------------------+------------------+-------------------+\n");
-    printf("| %-3s | %-25s | %-16s | %-17s |\n", "ID", "TITOLO", "GENERE", "COPIE DISPONIBILI");
-    printf("+-----+---------------------------+------------------+-------------------+\n");
+
+    if (options == 1)
+    {
+         // Intestazione della tabella
+        printf("+-----+---------------------------+------------------+-------------------+\n");
+        printf("| %-3s | %-25s | %-16s | %-17s |\n", "ID", "TITOLO", "GENERE", "COPIE DISPONIBILI");
+        printf("+-----+---------------------------+------------------+-------------------+\n");
+    }
+    else
+    {
+        printf("+-----+---------------------------+------------------+-------------------+\n");
+        printf("| %-3s | %-25s | %-16s | %-17s |\n", "ID", "TITOLO", "GENERE", "DATA RESTITUZIONE");
+        printf("+-----+---------------------------+------------------+-------------------+\n");
+    }
     
     char id[10] = "";
     char titolo[100] = "";
-    char copie_disponibili[10] = "";
     char genere[50] = "";
+    char ultima_colonna[11] = "";
     
     while ((token = strtok_r(rest, "\n", &rest)) != NULL) {
         if (strcmp(token, "---") == 0) {
@@ -461,13 +477,13 @@ void display_films(const char *film_data) {
                        id,
                        titolo, 
                        genere, 
-                       copie_disponibili);
+                       ultima_colonna);
                 
                 // Resetta i campi per il prossimo film
                 id[0] = '\0';
                 titolo[0] = '\0';
                 genere[0] = '\0';
-                copie_disponibili[0] = '\0';
+                ultima_colonna[0] = '\0';
             }
             continue;
         }
@@ -488,9 +504,12 @@ void display_films(const char *film_data) {
             } else if (strcasecmp(key, "genere") == 0) {
                 strncpy(genere, value, sizeof(genere) - 1);
                 genere[sizeof(genere) - 1] = '\0';
-            } else if (strcasecmp(key, "copie_disponibili") == 0) {
-                strncpy(copie_disponibili, value, sizeof(copie_disponibili) - 1);
-                copie_disponibili[sizeof(copie_disponibili) - 1] = '\0';
+            } else if (options == 1 && strcasecmp(key, "copie_disponibili") == 0) {
+                strncpy(ultima_colonna, value, sizeof(ultima_colonna) - 1);
+                ultima_colonna[sizeof(ultima_colonna) - 1] = '\0';
+            } else if (options == 0 && strcasecmp(key, "data_restituzione") == 0) {
+                strncpy(ultima_colonna, value, sizeof(ultima_colonna) - 1);
+                ultima_colonna[sizeof(ultima_colonna) - 1] = '\0';
             }
         }
     }
@@ -501,7 +520,7 @@ void display_films(const char *film_data) {
                id, 
                titolo, 
                genere, 
-               copie_disponibili);
+               ultima_colonna);
     }
     
     // Chiudi la tabella
@@ -544,7 +563,7 @@ void search_by_title(int sock) {
         printf("Nessun film trovato con il titolo '%s'.\n", title);
     } else {
         printf("Risultati della ricerca per titolo '%s':\n\n", title);
-        display_films(buffer);
+        display_films(buffer, 1);
     }
     
     printf("\nPremi invio per tornare al menu principale...");
@@ -584,7 +603,7 @@ void search_by_genre(int sock) {
         printf("Nessun film trovato nel genere '%s'.\n", genre);
     } else {
         printf("Risultati della ricerca per genere '%s':\n\n", genre);
-        display_films(buffer);
+        display_films(buffer, 1);
     }
     
     printf("\nPremi invio per tornare al menu principale...");
@@ -620,7 +639,7 @@ void search_by_popularity(int sock) {
         printf("Errore nel recupero dei film più popolari.\n");
     } else {
         printf("Film più popolari (ordinati per numero di noleggi):\n\n");
-        display_films(buffer);
+        display_films(buffer, 1);
     }
     
     printf("\nPremi invio per tornare al menu principale...");
@@ -675,6 +694,41 @@ int is_film_already_in_cart(int id_film) {
         }
     }
     return 0; // Film non presente nel carrello
+}
+
+void retrieve_loaned_films(int sock) {
+
+    clear_screen();
+    printf("===== FILM NOLEGGIATI =====\n\n");
+    char request[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE * 20] = {0};
+    int bytes_received;
+    
+    // Crea la richiesta di ricerca (5 = ricerca film noleggiati utente loggato)
+    snprintf(request, BUFFER_SIZE, "SEARCH:5:%d", id_utente_loggato);
+    send(sock, request, strlen(request), 0);
+    
+    bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
+    
+    if (bytes_received <= 0) {
+        printf("Errore nella ricezione dei dati dal server.\n");
+        printf("\nPremi invio per continuare...");
+        getchar();
+        return;
+    }
+    
+    buffer[bytes_received] = '\0';
+    
+    if (strncmp(buffer, "SEARCH_FAIL", 11) == 0) {
+        printf("Nessun film noleggiato\n");
+    } else {
+        display_films(buffer, 0);
+    }
+
+    
+
+    printf("\nPremi invio per tornare al menu principale...");
+    getchar();
 }
 
 // Funzione per mostrare il menu di ricerca film

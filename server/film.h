@@ -17,8 +17,7 @@ typedef enum {
     SEARCH_GENRE = 2,
     SEARCH_POPULARITY = 3,
     SEARCH_ID = 4,
-    NOLEGGIO = 5,
-    RESTITUZIONE = 6
+    SEARCH_NOLEGGIATI = 5
 } SearchType;
 
 // Struttura per rappresentare i dati di un film
@@ -27,6 +26,7 @@ typedef struct {
     char titolo[256];
     char genere[101];
     int copie_disponibili;
+    char data_restituzione[11]; // Formato YYYY-MM-DD
 } Film;
 
 // Funzione per gestire le richieste di catalogo film

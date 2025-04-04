@@ -147,6 +147,18 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
                     query);
             break;
 
+        case SEARCH_NOLEGGIATI:
+            // Ricerca film noleggiati da utente e non restituiti
+            snprintf(sql_query, BUFFER_SIZE,
+                    "SELECT n.id_film, f.titolo, f.genere, f.copie_disponibili, n.data_restituzione "
+                    "FROM noleggi n "
+                    "JOIN "
+                    "film f ON n.id_film = f.id "
+                    "WHERE n.id_utente = '%s' AND n.restituito = FALSE "
+                    "ORDER BY n.data_restituzione ASC;", 
+                    query);
+            break;
+            
         default:
             fprintf(stderr, "Tipo di ricerca non valido: %d\n", type);
             return 0;
@@ -176,7 +188,15 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
         strncpy(films[i].genere, PQgetvalue(result, i, 2), sizeof(films[i].genere) - 1);
         films[i].genere[sizeof(films[i].genere) - 1] = '\0';
         
-        films[i].copie_disponibili = atoi(PQgetvalue(result, i, 3));
+        
+
+        if (type == SEARCH_NOLEGGIATI) {
+            // Se la ricerca è per film noleggiati, ottieni la data di restituzione
+            strncpy(films[i].data_restituzione, PQgetvalue(result, i, 4), sizeof(films[i].data_restituzione) - 1);
+            films[i].data_restituzione[sizeof(films[i].data_restituzione) - 1] = '\0';
+        } else {
+            films[i].copie_disponibili = atoi(PQgetvalue(result, i, 3));
+        }
     }
     
     PQclear(result);
@@ -213,6 +233,10 @@ void format_films_data(Film *films, int num_films, char *output, size_t output_s
         
         // Copie disponibili
         chars_written = snprintf(ptr, remaining, "copie_disponibili: %d\n", films[i].copie_disponibili);
+        ptr += chars_written;
+        remaining -= chars_written;
+
+        chars_written = snprintf(ptr, remaining, "data_restituzione: %s\n", films[i].data_restituzione);
         ptr += chars_written;
         remaining -= chars_written;
         
