@@ -435,8 +435,6 @@ void check_out(int sock){
     printf("Carrello svuotato dopo il check-out.\n");
 }
 
-
-// Funzione per visualizzare il catalogo
 // Funzione per richiedere e visualizzare il catalogo film
 void view_catalogo(int sock) {
     char request[BUFFER_SIZE];
@@ -562,7 +560,6 @@ void display_films(const char *film_data, int options) {
     
     free(data);
 }
-
 
 // Funzione per cercare film per titolo
 void search_by_title(int sock) {
