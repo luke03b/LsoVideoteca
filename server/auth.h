@@ -6,9 +6,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <libpq-fe.h>
+#include <pthread.h>
 #include <sys/socket.h>
 
 #define BUFFER_SIZE 1024
+
+extern pthread_mutex_t db_mutex;
 
 // Funzione per gestire le richieste di login
 void handle_login_request(int client_socket, PGconn *conn, char *credentials);

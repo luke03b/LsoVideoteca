@@ -65,6 +65,7 @@ void handle_search_request(int client_socket, PGconn *conn, char *search_params)
 
 // Funzione per ottenere i film dal database
 int get_films(PGconn *conn, Film *films, int max_films) {
+    pthread_mutex_lock(&db_mutex);
     char query[BUFFER_SIZE];
     PGresult *result;
     int num_films = 0;
@@ -102,11 +103,13 @@ int get_films(PGconn *conn, Film *films, int max_films) {
     }
     
     PQclear(result);
+    pthread_mutex_unlock(&db_mutex);
     return num_films;
 }
 
 // Funzione per cercare film nel database
 int search_films(PGconn *conn, Film *films, int max_films, SearchType type, const char *query) {
+    pthread_mutex_lock(&db_mutex);
     char sql_query[BUFFER_SIZE];
     PGresult *result;
     int num_films = 0;
@@ -200,6 +203,7 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
     }
     
     PQclear(result);
+    pthread_mutex_unlock(&db_mutex);
     return num_films;
 }
 

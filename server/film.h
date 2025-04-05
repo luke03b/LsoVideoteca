@@ -6,10 +6,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <libpq-fe.h>
+#include <pthread.h>
 #include <sys/socket.h>
 
 #define BUFFER_SIZE 1024
 #define MAX_FILMS 20
+
+extern pthread_mutex_t db_mutex;
 
 // Enumerazione per i tipi di ricerca
 typedef enum {

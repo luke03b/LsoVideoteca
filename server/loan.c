@@ -22,6 +22,7 @@ void handle_loan_request(int client_socket, PGconn *conn, char *info) {
 
 // Funzione per verificare le credenziali nel database
 int do_loan(PGconn *conn, const char *id_utente, const char *id_film) {
+    pthread_mutex_lock(&db_mutex);
     char query[BUFFER_SIZE];
     snprintf(query, BUFFER_SIZE, "SELECT noleggia_film('%s', '%s')", id_utente, id_film);
     
@@ -47,6 +48,7 @@ int do_loan(PGconn *conn, const char *id_utente, const char *id_film) {
         // Altre operazioni in caso di fallimento
     }
 
+    pthread_mutex_unlock(&db_mutex);
     return success;
 }
 void handle_return_request(int client_socket, PGconn *conn, char *info) {
@@ -71,6 +73,7 @@ void handle_return_request(int client_socket, PGconn *conn, char *info) {
 
 // Funzione per verificare le credenziali nel database
 int return_loan(PGconn *conn, const char *id_utente, const char *id_film) {
+    pthread_mutex_lock(&db_mutex);
     char query[BUFFER_SIZE];
     snprintf(query, BUFFER_SIZE, "SELECT restituisci_film('%s', '%s')", id_utente, id_film);
     
@@ -96,5 +99,6 @@ int return_loan(PGconn *conn, const char *id_utente, const char *id_film) {
         // Altre operazioni in caso di fallimento
     }
 
+    pthread_mutex_unlock(&db_mutex);
     return success;
 }

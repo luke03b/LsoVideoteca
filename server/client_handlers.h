@@ -7,8 +7,11 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <libpq-fe.h>
+#include <pthread.h>
 
 #define BUFFER_SIZE 1024
+
+extern pthread_mutex_t db_mutex;
 
 // Struttura per passare dati al thread
 typedef struct {

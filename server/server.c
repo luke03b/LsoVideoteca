@@ -11,6 +11,8 @@
 #define PORT 8080
 #define MAX_CLIENTS 10
 
+pthread_mutex_t db_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void clear_screen() {
     printf("\033[H\033[J");
 }
@@ -24,7 +26,7 @@ int main() {
     int thread_count = 0;
     
     // Connessione al database PostgreSQL
-    PGconn *conn = PQconnectdb("host=localhost port=5432 dbname=auth_db user=postgres password=postgres");
+    PGconn *conn = PQconnectdb("host=postgres port=5432 dbname=auth_db user=postgres password=postgres");
     
     if (PQstatus(conn) != CONNECTION_OK) {
         fprintf(stderr, "Connessione al database fallita: %s\n", PQerrorMessage(conn));
@@ -96,6 +98,8 @@ int main() {
             }
         }
     }
+
+    pthread_mutex_destroy(&db_mutex);
     
     // Chiusura della connessione al database
     PQfinish(conn);

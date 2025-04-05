@@ -27,6 +27,7 @@ void handle_notification_request(int client_socket, PGconn *conn, char *id_utent
 
 // Funzione per verificare le credenziali nel database
 int check_notifications(PGconn *conn, const char *id_utente) {
+    pthread_mutex_lock(&db_mutex);
     char query[BUFFER_SIZE];
     snprintf(query, BUFFER_SIZE, 
                 "SELECT * "
@@ -55,6 +56,6 @@ int check_notifications(PGconn *conn, const char *id_utente) {
     
     
     PQclear(result);
-    
+    pthread_mutex_unlock(&db_mutex);
     return return_value;  // Restituisce -1 se non trovato, altrimenti l'ID utente
 }

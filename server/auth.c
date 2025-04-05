@@ -29,6 +29,7 @@ void handle_login_request(int client_socket, PGconn *conn, char *credentials) {
 
 // Funzione per verificare le credenziali nel database
 int verify_credentials(PGconn *conn, const char *username, const char *password) {
+    pthread_mutex_lock(&db_mutex);
     char query[BUFFER_SIZE];
     snprintf(query, BUFFER_SIZE, "SELECT id FROM utenti WHERE username='%s' AND password='%s'", 
              username, password);
@@ -50,7 +51,7 @@ int verify_credentials(PGconn *conn, const char *username, const char *password)
     }
     
     PQclear(result);
-    
+    pthread_mutex_unlock(&db_mutex);
     return user_id;  // Restituisce -1 se non trovato, altrimenti l'ID utente
 }
 

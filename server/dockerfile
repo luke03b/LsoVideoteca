@@ -1,0 +1,23 @@
+FROM ubuntu:latest
+
+# Installa dipendenze
+RUN apt-get update && apt-get install -y \
+    gcc \
+    make \
+    libpq-dev \
+    postgresql-client
+
+# Crea directory di lavoro
+WORKDIR /app/server
+
+# Copia i file sorgente
+COPY . .
+
+# Compila il server
+RUN make
+
+# Esponi la porta su cui il server è in ascolto
+EXPOSE 8080
+
+# Comando per avviare il server
+CMD ["./server"]
