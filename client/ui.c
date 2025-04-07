@@ -29,7 +29,7 @@ void show_main_menu(int sock, char *username, int* num_film, int* id_utente_logg
         printf(BOLD COLOR_CYAN "╔════════════════════════════════╗\n" COLOR_RESET);
         printf(BOLD COLOR_CYAN "║" COLOR_GREEN "  BENVENUTO, %-19s" COLOR_CYAN "║\n" COLOR_RESET, username);
         printf(BOLD COLOR_CYAN "╠════════════════════════════════╣\n" COLOR_RESET);
-        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🎞️  " COLOR_WHITE "1. Noleggia Film           " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🎞️ " COLOR_WHITE "1. Noleggia Film            " COLOR_CYAN "║\n" COLOR_RESET);
         printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🛒 " COLOR_WHITE "2. Carrello                 " COLOR_CYAN "║\n" COLOR_RESET);
         printf(BOLD COLOR_CYAN "║" COLOR_RESET " 📋 " COLOR_WHITE "3. Film noleggiati          " COLOR_CYAN "║\n" COLOR_RESET);
         printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🔔 " COLOR_WHITE "4. Notifiche                " COLOR_CYAN "║\n" COLOR_RESET);
