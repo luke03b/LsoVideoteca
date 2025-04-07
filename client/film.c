@@ -1,5 +1,19 @@
 # include "film.h"
 
+// Definizione colori ANSI 
+#define COLOR_RESET   "\x1b[0m"
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_YELLOW  "\x1b[33m"
+#define COLOR_BLUE    "\x1b[34m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_CYAN    "\x1b[36m"
+#define COLOR_WHITE   "\x1b[37m"
+#define BOLD          "\x1b[1m"
+#define UNDERLINE     "\x1b[4m"
+#define BG_BLACK      "\x1b[40m"
+#define BG_BLUE       "\x1b[44m"
+
 // Funzione per cercare film per titolo
 void search_by_title(int sock) {
     char title[100];
@@ -8,9 +22,11 @@ void search_by_title(int sock) {
     int bytes_received;
     
     clear_screen();
-    printf("===== RICERCA FILM PER TITOLO =====\n\n");
+    printf(COLOR_CYAN "╔═══════════════════════════════════╗\n" COLOR_RESET);
+    printf(COLOR_CYAN "║" COLOR_WHITE BOLD "      RICERCA FILM PER TITOLO      " COLOR_CYAN "║\n" COLOR_RESET);
+    printf(COLOR_CYAN "╚═══════════════════════════════════╝\n\n" COLOR_RESET);
     
-    printf("Inserisci parte del titolo: ");
+    printf(COLOR_YELLOW "Inserisci parte del titolo: " COLOR_RESET);
     fgets(title, sizeof(title), stdin);
     title[strcspn(title, "\n")] = 0; // Rimuovi il newline
     
@@ -18,10 +34,15 @@ void search_by_title(int sock) {
     snprintf(request, BUFFER_SIZE, "SEARCH:1:%s", title);
     send(sock, request, strlen(request), 0);
     
+    printf(COLOR_BLUE "\n[⟳] Ricerca in corso..." COLOR_RESET);
+    fflush(stdout);
+    
     bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
     
+    printf("\r                         \r"); // Pulisce la riga del caricamento
+    
     if (bytes_received <= 0) {
-        printf("Errore nella ricezione dei dati dal server.\n");
+        printf(COLOR_RED "\n[✘] Errore nella ricezione dei dati dal server.\n" COLOR_RESET);
         printf("\nPremi invio per continuare...");
         getchar();
         return;
@@ -30,13 +51,13 @@ void search_by_title(int sock) {
     buffer[bytes_received] = '\0';
     
     if (strncmp(buffer, "SEARCH_FAIL", 11) == 0) {
-        printf("Nessun film trovato con il titolo '%s'.\n", title);
+        printf(COLOR_RED "\n[✘] Nessun film trovato con il titolo '" COLOR_YELLOW "%s" COLOR_RED "'.\n" COLOR_RESET, title);
     } else {
-        printf("Risultati della ricerca per titolo '%s':\n\n", title);
+        printf(COLOR_GREEN "\n[✔] Risultati della ricerca per titolo '" COLOR_YELLOW "%s" COLOR_GREEN "':\n\n" COLOR_RESET, title);
         display_films(buffer, 1);
     }
     
-    printf("\nPremi invio per tornare al menu principale...");
+    printf(COLOR_CYAN "\nPremi invio per tornare al menu principale..." COLOR_RESET);
     getchar();
 }
 
@@ -48,9 +69,11 @@ void search_by_genre(int sock) {
     int bytes_received;
     
     clear_screen();
-    printf("===== RICERCA FILM PER GENERE =====\n\n");
+    printf(COLOR_CYAN "╔═══════════════════════════════════╗\n" COLOR_RESET);
+    printf(COLOR_CYAN "║" COLOR_WHITE BOLD "      RICERCA FILM PER GENERE      " COLOR_CYAN "║\n" COLOR_RESET);
+    printf(COLOR_CYAN "╚═══════════════════════════════════╝\n\n" COLOR_RESET);
     
-    printf("Inserisci genere: ");
+    printf(COLOR_YELLOW "Inserisci genere: " COLOR_RESET);
     fgets(genre, sizeof(genre), stdin);
     genre[strcspn(genre, "\n")] = 0; // Rimuovi il newline
     
@@ -58,10 +81,15 @@ void search_by_genre(int sock) {
     snprintf(request, BUFFER_SIZE, "SEARCH:2:%s", genre);
     send(sock, request, strlen(request), 0);
     
+    printf(COLOR_BLUE "\n[⟳] Ricerca in corso..." COLOR_RESET);
+    fflush(stdout);
+    
     bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
     
+    printf("\r                         \r"); // Pulisce la riga del caricamento
+    
     if (bytes_received <= 0) {
-        printf("Errore nella ricezione dei dati dal server.\n");
+        printf(COLOR_RED "\n[✘] Errore nella ricezione dei dati dal server.\n" COLOR_RESET);
         printf("\nPremi invio per continuare...");
         getchar();
         return;
@@ -70,13 +98,13 @@ void search_by_genre(int sock) {
     buffer[bytes_received] = '\0';
     
     if (strncmp(buffer, "SEARCH_FAIL", 11) == 0) {
-        printf("Nessun film trovato nel genere '%s'.\n", genre);
+        printf(COLOR_RED "\n[✘] Nessun film trovato nel genere '" COLOR_YELLOW "%s" COLOR_RED "'.\n" COLOR_RESET, genre);
     } else {
-        printf("Risultati della ricerca per genere '%s':\n\n", genre);
+        printf(COLOR_GREEN "\n[✔] Risultati della ricerca per genere '" COLOR_YELLOW "%s" COLOR_GREEN "':\n\n" COLOR_RESET, genre);
         display_films(buffer, 1);
     }
     
-    printf("\nPremi invio per tornare al menu principale...");
+    printf(COLOR_CYAN "\nPremi invio per tornare al menu principale..." COLOR_RESET);
     getchar();
 }
 
@@ -87,17 +115,24 @@ void search_by_popularity(int sock) {
     int bytes_received;
     
     clear_screen();
-    printf("===== FILM PIÙ POPOLARI =====\n\n");
+    printf(COLOR_CYAN "╔═════════════════════════════════════╗\n" COLOR_RESET);
+    printf(COLOR_CYAN "║" COLOR_WHITE BOLD "          FILM PIÙ POPOLARI          " COLOR_CYAN "║\n" COLOR_RESET);
+    printf(COLOR_CYAN "╚═════════════════════════════════════╝\n\n" COLOR_RESET);
     
     // Crea la richiesta di ricerca (3 = ricerca per popolarità)
     // Non è necessario passare una query, quindi usiamo un valore vuoto
     snprintf(request, BUFFER_SIZE, "SEARCH:3:");
     send(sock, request, strlen(request), 0);
     
+    printf(COLOR_BLUE "[⟳] Caricamento classifica..." COLOR_RESET);
+    fflush(stdout);
+    
     bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
     
+    printf("\r                              \r"); // Pulisce la riga del caricamento
+    
     if (bytes_received <= 0) {
-        printf("Errore nella ricezione dei dati dal server.\n");
+        printf(COLOR_RED "\n[✘] Errore nella ricezione dei dati dal server.\n" COLOR_RESET);
         printf("\nPremi invio per continuare...");
         getchar();
         return;
@@ -106,12 +141,12 @@ void search_by_popularity(int sock) {
     buffer[bytes_received] = '\0';
     
     if (strncmp(buffer, "SEARCH_FAIL", 11) == 0) {
-        printf("Errore nel recupero dei film più popolari.\n");
+        printf(COLOR_RED "\n[✘] Errore nel recupero dei film più popolari.\n" COLOR_RESET);
     } else {
-        printf("Film più popolari (ordinati per numero di noleggi):\n\n");
+        printf(COLOR_GREEN "\n[✔] Film più popolari " COLOR_YELLOW "(ordinati per numero di noleggi)" COLOR_GREEN ":\n\n" COLOR_RESET);
         display_films(buffer, 1);
     }
     
-    printf("\nPremi invio per tornare al menu principale...");
+    printf(COLOR_CYAN "\nPremi invio per tornare al menu principale..." COLOR_RESET);
     getchar();
 }
