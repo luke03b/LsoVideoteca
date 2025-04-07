@@ -1,5 +1,19 @@
 # include "ui.h"
 
+// Definizione colori ANSI
+#define COLOR_RESET   "\x1b[0m"
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_YELLOW  "\x1b[33m"
+#define COLOR_BLUE    "\x1b[34m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_CYAN    "\x1b[36m"
+#define COLOR_WHITE   "\x1b[37m"
+#define BOLD          "\x1b[1m"
+#define UNDERLINE     "\x1b[4m"
+#define BG_BLACK      "\x1b[40m"
+#define BG_BLUE       "\x1b[44m"
+
 // Funzione per pulire lo schermo
 void clear_screen() {
     printf("\033[H\033[J");
@@ -10,13 +24,24 @@ void show_main_menu(int sock, char *username, int* num_film, int* id_utente_logg
     // Loop principale del menu
     while (1) {
         clear_screen();
-        printf("===== BENVENUTO =====\n");
-        printf("1. Noleggia Film\n");
-        printf("2. Carrello\n");
-        printf("3. Film noleggiati\n");
-        printf("4. Notifiche\n");
-        printf("5. Logout\n");
-        printf("Scelta: ");
+        display_logo();
+        
+        printf(BOLD COLOR_CYAN "╔════════════════════════════════╗\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_GREEN "  BENVENUTO, %-19s" COLOR_CYAN "║\n" COLOR_RESET, username);
+        printf(BOLD COLOR_CYAN "╠════════════════════════════════╣\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🎞️  " COLOR_WHITE "1. Noleggia Film           " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🛒 " COLOR_WHITE "2. Carrello                 " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 📋 " COLOR_WHITE "3. Film noleggiati          " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🔔 " COLOR_WHITE "4. Notifiche                " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🚪 " COLOR_WHITE "5. Logout                   " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "╚════════════════════════════════╝\n" COLOR_RESET);
+        
+        if (*num_film > 0) {
+            printf(COLOR_YELLOW "\n[🛒] Hai %d film nel carrello\n" COLOR_RESET, *num_film);
+        }
+        
+        printf(COLOR_YELLOW "\nScelta: " COLOR_RESET);
+        
         if (scanf("%d", &choice) != 1) {
             // Input non valido (non è un numero)
             while (getchar() != '\n'); // Pulisci il buffer di input
@@ -39,13 +64,13 @@ void show_main_menu(int sock, char *username, int* num_film, int* id_utente_logg
                 show_notifications(sock, id_utente_loggato);
                 break;
             case 5:
-                printf("Arrivederci\n");
+                printf(COLOR_GREEN "\n[✔] Logout effettuato. Arrivederci %s!\n" COLOR_RESET, username);
                 printf("\nPremi invio per continuare...");
                 getchar();
                 clear_screen();
                 return;
             default:
-                printf("Scelta non valida. Riprova.\n");
+                printf(COLOR_RED "\n[✘] Scelta non valida. Riprova.\n" COLOR_RESET);
                 printf("\nPremi invio per continuare...");
                 getchar();
         }
@@ -59,15 +84,22 @@ void view_catalogo(int sock) {
     int bytes_received;
     
     clear_screen();
-    printf("===== CATALOGO FILM =====\n\n");
+    printf(COLOR_CYAN "╔══════════════════════════════════════╗\n" COLOR_RESET);
+    printf(COLOR_CYAN "║" COLOR_WHITE BOLD "          CATALOGO FILM               " COLOR_CYAN "║\n" COLOR_RESET);
+    printf(COLOR_CYAN "╚══════════════════════════════════════╝\n\n" COLOR_RESET);
+    
+    printf(COLOR_BLUE "[⟳] Caricamento catalogo..." COLOR_RESET);
+    fflush(stdout);
     
     snprintf(request, BUFFER_SIZE, "CATALOGO");
     send(sock, request, strlen(request), 0);
     
     bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
     
+    printf("\r                           \r"); // Pulisce la riga del caricamento
+    
     if (bytes_received <= 0) {
-        printf("Errore nella ricezione dei dati dal server.\n");
+        printf(COLOR_RED "[✘] Errore nella ricezione dei dati dal server.\n" COLOR_RESET);
         printf("\nPremi invio per continuare...");
         getchar(); // Attende che l'utente prema invio
         return;
@@ -76,7 +108,7 @@ void view_catalogo(int sock) {
     buffer[bytes_received] = '\0';
     
     if (strncmp(buffer, "FILM_FAIL", 9) == 0) {
-        printf("Errore: Impossibile recuperare il catalogo film.\n");
+        printf(COLOR_RED "[✘] Errore: Impossibile recuperare il catalogo film.\n" COLOR_RESET);
     } else {
         display_films(buffer, 1);
     }
@@ -85,7 +117,7 @@ void view_catalogo(int sock) {
 void display_films(const char *film_data, int options) {
     char *data = strdup(film_data);
     if (data == NULL) {
-        printf("Errore: memoria insufficiente.\n");
+        printf(COLOR_RED "[✘] Errore: memoria insufficiente.\n" COLOR_RESET);
         return;
     }
     
@@ -96,37 +128,47 @@ void display_films(const char *film_data, int options) {
     token = strtok_r(rest, "\n", &rest);
     if (token != NULL) {
         film_count = atoi(token);
-        printf("Trovati %d film:\n\n", film_count);
+        printf(COLOR_GREEN "[🎬] Trovati %d film:\n\n" COLOR_RESET, film_count);
     }
 
-    if (options == 1)
-    {
-         // Intestazione della tabella
-        printf("+-----+---------------------------+------------------+-------------------+\n");
-        printf("| %-3s | %-25s | %-16s | %-17s |\n", "ID", "TITOLO", "GENERE", "COPIE DISPONIBILI");
-        printf("+-----+---------------------------+------------------+-------------------+\n");
-    }
-    else
-    {
-        printf("+-----+---------------------------+------------------+-------------------+\n");
-        printf("| %-3s | %-25s | %-16s | %-17s |\n", "ID", "TITOLO", "GENERE", "DATA RESTITUZIONE");
-        printf("+-----+---------------------------+------------------+-------------------+\n");
+    if (options == 1) {
+        // Intestazione della tabella per catalogo normale
+        printf(COLOR_CYAN "+-----+---------------------------+------------------+-------------------+\n");
+        printf("| " COLOR_YELLOW "%-3s" COLOR_CYAN " | " COLOR_YELLOW "%-25s" COLOR_CYAN " | " COLOR_YELLOW "%-16s" COLOR_CYAN " | " COLOR_YELLOW "%-17s" COLOR_CYAN " |\n", 
+               "ID", "TITOLO", "GENERE", "COPIE DISPONIBILI");
+        printf("+-----+---------------------------+------------------+-------------------+\n" COLOR_RESET);
+    } else {
+        // Intestazione della tabella per film noleggiati
+        printf(COLOR_MAGENTA "+-----+---------------------------+------------------+-------------------+\n");
+        printf("| " COLOR_YELLOW "%-3s" COLOR_MAGENTA " | " COLOR_YELLOW "%-25s" COLOR_MAGENTA " | " COLOR_YELLOW "%-16s" COLOR_MAGENTA " | " COLOR_YELLOW "%-17s" COLOR_MAGENTA " |\n", 
+               "ID", "TITOLO", "GENERE", "DATA RESTITUZIONE");
+        printf("+-----+---------------------------+------------------+-------------------+\n" COLOR_RESET);
     }
     
     char id[10] = "";
     char titolo[100] = "";
     char genere[50] = "";
     char ultima_colonna[11] = "";
+    int row_count = 0;
     
     while ((token = strtok_r(rest, "\n", &rest)) != NULL) {
         if (strcmp(token, "---") == 0) {
             // Stampa il film corrente in formato tabella
             if (titolo[0] != '\0') {
+                // Alterna i colori delle righe per maggiore leggibilità
+                if (row_count % 2 == 0) {
+                    printf(options == 1 ? COLOR_CYAN : COLOR_MAGENTA);
+                } else {
+                    printf(COLOR_RESET);
+                }
+                
                 printf("| %-3s | %-25s | %-16s | %-17s |\n", 
                        id,
                        titolo, 
                        genere, 
                        ultima_colonna);
+                
+                row_count++;
                 
                 // Resetta i campi per il prossimo film
                 id[0] = '\0';
@@ -165,6 +207,12 @@ void display_films(const char *film_data, int options) {
     
     // Stampa l'ultimo film se c'è
     if (titolo[0] != '\0') {
+        if (row_count % 2 == 0) {
+            printf(options == 1 ? COLOR_CYAN : COLOR_MAGENTA);
+        } else {
+            printf(COLOR_RESET);
+        }
+        
         printf("| %-3s | %-25s | %-16s | %-17s |\n", 
                id, 
                titolo, 
@@ -173,7 +221,9 @@ void display_films(const char *film_data, int options) {
     }
     
     // Chiudi la tabella
+    printf(options == 1 ? COLOR_CYAN : COLOR_MAGENTA);
     printf("+-----+---------------------------+------------------+-------------------+\n");
+    printf(COLOR_RESET);
     
     free(data);
 }
@@ -185,13 +235,19 @@ void show_search_menu(int sock, int* num_film, int* carrello) {
     while (1) {
         clear_screen();
         view_catalogo(sock);
-        printf("\n===== MENU RICERCA FILM =====\n");
-        printf("1. Aggiungi al carrello tramite ID\n");
-        printf("2. Cerca per titolo\n");
-        printf("3. Cerca per genere\n");
-        printf("4. Mostra i film più popolari\n");
-        printf("5. Torna al menu principale\n");
-        printf("Scelta: ");
+        
+        printf(COLOR_BLUE "\n╔══════════════════════════════════╗\n" COLOR_RESET);
+        printf(COLOR_BLUE "║" COLOR_WHITE BOLD "      MENU RICERCA FILM           " COLOR_BLUE "║\n" COLOR_RESET);
+        printf(COLOR_BLUE "╠══════════════════════════════════╣\n" COLOR_RESET);
+        printf(COLOR_BLUE "║" COLOR_RESET " 🛒 " COLOR_WHITE "1. Aggiungi al carrello       " COLOR_BLUE "║\n" COLOR_RESET);
+        printf(COLOR_BLUE "║" COLOR_RESET " 🔍 " COLOR_WHITE "2. Cerca per titolo           " COLOR_BLUE "║\n" COLOR_RESET);
+        printf(COLOR_BLUE "║" COLOR_RESET " 📚 " COLOR_WHITE "3. Cerca per genere           " COLOR_BLUE "║\n" COLOR_RESET);
+        printf(COLOR_BLUE "║" COLOR_RESET " 🌟 " COLOR_WHITE "4. Mostra i film più popolari " COLOR_BLUE "║\n" COLOR_RESET);
+        printf(COLOR_BLUE "║" COLOR_RESET " 🏠 " COLOR_WHITE "5. Torna al menu principale   " COLOR_BLUE "║\n" COLOR_RESET);
+        printf(COLOR_BLUE "╚══════════════════════════════════╝\n" COLOR_RESET);
+        
+        printf(COLOR_YELLOW "\nScelta: " COLOR_RESET);
+        
         if (scanf("%d", &choice) != 1) {
             // Input non valido (non è un numero)
             while (getchar() != '\n'); // Pulisci il buffer di input
@@ -216,7 +272,7 @@ void show_search_menu(int sock, int* num_film, int* carrello) {
             case 5:
                 return;
             default:
-                printf("Scelta non valida. Riprova.\n");
+                printf(COLOR_RED "\n[✘] Scelta non valida. Riprova.\n" COLOR_RESET);
                 printf("\nPremi invio per continuare...");
                 getchar();
         }

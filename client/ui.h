@@ -48,4 +48,7 @@ void show_notifications(int sock, int* id_utente_loggato);
 // Funzione per aggiungere un film al carrello
 void add_to_cart(int sock, int* num_film, int* carrello);
 
+// Funzione per visualizzare il logo CineThreads (definita in client.c)
+void display_logo();
+
 #endif

@@ -10,9 +10,38 @@
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE 1024
 
+// Definizione colori ANSI
+#define COLOR_RESET   "\x1b[0m"
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_YELLOW  "\x1b[33m"
+#define COLOR_BLUE    "\x1b[34m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_CYAN    "\x1b[36m"
+#define COLOR_WHITE   "\x1b[37m"
+#define BOLD          "\x1b[1m"
+#define UNDERLINE     "\x1b[4m"
+#define BG_BLACK      "\x1b[40m"
+#define BG_BLUE       "\x1b[44m"
+
 int id_utente_loggato = 0; // ID dell'utente loggato
 int carrello[5] = {0}; // Array per memorizzare gli ID dei film nel carrello
 int num_film = 0; // Numero di film nel carrello
+
+// Funzione per visualizzare il logo CineThreads
+void display_logo() {
+    printf("\n");
+    printf(COLOR_CYAN BOLD);
+    printf("   ██████╗██╗███╗   ██╗███████╗████████╗██╗  ██╗██████╗ ███████╗ █████╗ ██████╗ ███████╗\n");
+    printf("  ██╔════╝██║████╗  ██║██╔════╝╚══██╔══╝██║  ██║██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔════╝\n");
+    printf("  ██║     ██║██╔██╗ ██║█████╗     ██║   ███████║██████╔╝█████╗  ███████║██║  ██║███████╗\n");
+    printf("  ██║     ██║██║╚██╗██║██╔══╝     ██║   ██╔══██║██╔══██╗██╔══╝  ██╔══██║██║  ██║╚════██║\n");
+    printf("  ╚██████╗██║██║ ╚████║███████╗   ██║   ██║  ██║██║  ██║███████╗██║  ██║██████╔╝███████║\n");
+    printf("   ╚═════╝╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═════╝ ╚══════╝\n");
+    printf(COLOR_RESET);
+    printf(COLOR_YELLOW "                  🎬 Il tuo cinema digitale preferito 🎬\n" COLOR_RESET);
+    printf("\n");
+}
 
 int main() {
     clear_screen();
@@ -22,7 +51,7 @@ int main() {
     
     // Creazione socket
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\nErrore nella creazione del socket\n");
+        printf(COLOR_RED "\n[✘] Errore nella creazione del socket\n" COLOR_RESET);
         return -1;
     }
     
@@ -32,30 +61,38 @@ int main() {
     
     // Conversione indirizzo IP da testo a binario
     if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
-        printf("\nIndirizzo IP non valido / non supportato\n");
+        printf(COLOR_RED "\n[✘] Indirizzo IP non valido / non supportato\n" COLOR_RESET);
         return -1;
     }
     
     // Tentativo di connessione al server
-    printf("Tentativo di connessione al server %s:%d...\n", SERVER_IP, PORT);
+    printf(COLOR_CYAN "[⟳] Tentativo di connessione al server %s:%d...\n" COLOR_RESET, SERVER_IP, PORT);
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        printf("\nConnessione fallita\n");
+        printf(COLOR_RED "\n[✘] Connessione fallita\n" COLOR_RESET);
         return -1;
     }
     
     // Leggi messaggio di benvenuto dal server
     read(sock, buffer, BUFFER_SIZE);
-    printf("Server: %s\n\n", buffer);
+    printf(COLOR_GREEN "[✔] Server: %s\n\n" COLOR_RESET, buffer);
     
     int choice = 0;
     
     // Loop principale del menu
     while (1) {
-        printf("===== MENU AUTENTICAZIONE =====\n");
-        printf("1. Login\n");
-        printf("2. Registrazione\n");
-        printf("3. Esci\n");
-        printf("Scelta: ");
+        display_logo();
+        
+        printf("\n");
+        printf(BOLD COLOR_CYAN "╔════════════════════════════════╗\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_WHITE "      MENU AUTENTICAZIONE       " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "╠════════════════════════════════╣\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🔑 " COLOR_WHITE "1. Login                    " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 📝 " COLOR_WHITE "2. Registrazione            " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "║" COLOR_RESET " 🚪 " COLOR_WHITE "3. Esci                     " COLOR_CYAN "║\n" COLOR_RESET);
+        printf(BOLD COLOR_CYAN "╚════════════════════════════════╝\n" COLOR_RESET);
+        printf("\n");
+        printf(COLOR_YELLOW "Scelta: " COLOR_RESET);
+        
         if (scanf("%d", &choice) != 1) {
             // Input non valido (non è un numero)
             while (getchar() != '\n'); // Pulisci il buffer di input
@@ -73,10 +110,12 @@ int main() {
                 break;
             case 3:
                 close(sock);
-                printf("Disconnessione dal server. Arrivederci!\n");
+                clear_screen();
+                display_logo();
+                printf(COLOR_GREEN "\n[✔] Disconnessione dal server. Arrivederci!\n" COLOR_RESET);
                 return 0;
             default:
-                printf("Scelta non valida. Riprova.\n");
+                printf(COLOR_RED "\n[✘] Scelta non valida. Riprova.\n" COLOR_RESET);
                 printf("\nPremi invio per continuare...");
                 getchar();
                 clear_screen();
