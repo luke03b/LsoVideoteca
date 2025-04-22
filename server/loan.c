@@ -31,6 +31,7 @@ int do_loan(PGconn *conn, const char *id_utente, const char *id_film) {
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         fprintf(stderr, "Query fallita: %s\n", PQerrorMessage(conn));
         PQclear(result);
+        pthread_mutex_unlock(&db_mutex);
         return 0;
     }
 
@@ -82,6 +83,7 @@ int return_loan(PGconn *conn, const char *id_utente, const char *id_film) {
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         fprintf(stderr, "Query fallita: %s\n", PQerrorMessage(conn));
         PQclear(result);
+        pthread_mutex_unlock(&db_mutex);
         return 0;
     }
 

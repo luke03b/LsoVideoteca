@@ -39,6 +39,7 @@ int verify_credentials(PGconn *conn, const char *username, const char *password)
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         fprintf(stderr, "Query fallita: %s\n", PQerrorMessage(conn));
         PQclear(result);
+        pthread_mutex_unlock(&db_mutex);
         return -1;  // Restituisci -1 in caso di errore
     }
     

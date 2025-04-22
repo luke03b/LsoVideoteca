@@ -81,6 +81,7 @@ int get_films(PGconn *conn, Film *films, int max_films) {
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         fprintf(stderr, "Query fallita: %s\n", PQerrorMessage(conn));
         PQclear(result);
+        pthread_mutex_unlock(&db_mutex);
         return 0;
     }
     
@@ -164,6 +165,7 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
             
         default:
             fprintf(stderr, "Tipo di ricerca non valido: %d\n", type);
+            pthread_mutex_unlock(&db_mutex);
             return 0;
     }
     
@@ -173,6 +175,7 @@ int search_films(PGconn *conn, Film *films, int max_films, SearchType type, cons
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         fprintf(stderr, "Query di ricerca fallita: %s\n", PQerrorMessage(conn));
         PQclear(result);
+        pthread_mutex_unlock(&db_mutex);
         return 0;
     }
     

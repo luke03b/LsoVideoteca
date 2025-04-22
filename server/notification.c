@@ -42,6 +42,7 @@ int check_notifications(PGconn *conn, const char *id_utente) {
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         fprintf(stderr, "Query fallita: %s\n", PQerrorMessage(conn));
         PQclear(result);
+        pthread_mutex_unlock(&db_mutex);
         return -1;  // Restituisci -1 in caso di errore
     }
     
